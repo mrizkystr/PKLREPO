@@ -4,8 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mitra Pie Chart - Data Management</title>
+    <title>Target Tracking</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.2/css/bootstrap.min.css">
+
     <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
@@ -15,25 +16,34 @@
     <!-- Bootstrap JS -->
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
 
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
     <style>
         body {
-            background: linear-gradient(135deg, #eef2f3, #8e9eab);
+            background: linear-gradient(135deg, #f3f4f6, #a2c2e9);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
             padding: 0;
-            color: #333;
+        }
+
+        .main-content {
+            margin-left: 260px;
+            /* Push content to right to make space for sidebar */
+            padding: 20px;
+        }
+
+        .table-container {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+            margin: 30px auto;
+            max-width: 800px;
         }
 
         /* Sidebar Styling */
         .dropdown-menu {
             background: linear-gradient(180deg, #36d1dc, #5b86e5);
-            /* Same as sidebar */
             border: none;
-            /* Remove the default border */
             box-shadow: none;
-            /* Remove the default shadow */
         }
 
         .dropdown-item {
@@ -42,12 +52,10 @@
 
         .dropdown-item:hover {
             background-color: #007bff;
-            /* Keep the hover effect consistent */
         }
 
         .sidebar a.active {
             background-color: #ffdd57;
-            /* Highlight active item */
         }
 
         .sidebar {
@@ -75,11 +83,6 @@
             background-color: #007bff;
         }
 
-        .sidebar a.active {
-            background-color: #ffdd57;
-            color: white;
-        }
-
         .sidebar .sidebar-brand {
             padding: 15px;
             font-size: 1.2rem;
@@ -87,30 +90,19 @@
             color: white;
         }
 
-        .main-content {
-            margin-left: 250px;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            /* Pusatkan konten secara horizontal */
-            justify-content: center;
-            /* Pusatkan konten secara vertikal */
-            min-height: 100vh;
-            /* Agar konten menyesuaikan tinggi halaman */
+        /* Center content for gap MTD */
+        .row .col-lg-6 {
+            margin-bottom: 40px;
         }
 
-        canvas {
-            margin-top: 20px;
-            width: 800px !important;
-            height: auto !important;
-            max-width: 100%;
-            max-height: auto;
+        h1 {
+            text-align: center;
         }
     </style>
 </head>
 
 <body>
+
     <!-- Sidebar -->
     <div class="sidebar">
         <div class="sidebar-brand">Data Management</div>
@@ -185,99 +177,108 @@
 
     <!-- Main Content -->
     <div class="main-content">
-        <h1>Mitra Pie Chart</h1>
+        <h1>Target Tracking</h1>
 
-        <form method="GET" action="{{ route('data-ps.mitra-pie-chart') }}">
+        <!-- Month Filter -->
+        <form method="GET" action="{{ route('data-ps.target-tracking') }}" class="text-right">
             <div class="form-group">
-                <label for="bulan_ps">Pilih Bulan:</label>
-                <select name="bulan_ps" id="bulan_ps" class="form-control">
-                    <option value="">Semua Bulan</option>
-                    @foreach (['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'] as $month)
-                        <option value="{{ $month }}" {{ request('bulan_ps') === $month ? 'selected' : '' }}>
-                            {{ $month }}</option>
-                    @endforeach
+                <label for="bulan">Select Current Month:</label>
+                <select class="form-control" id="bulan" name="bulan" onchange="this.form.submit()">
+                    <option value="">-- Select Month --</option>
+                    @for ($i = 1; $i <= 12; $i++)
+                        <option value="{{ $i }}" {{ $selectedMonth == $i ? 'selected' : '' }}>
+                            {{ date('F', mktime(0, 0, 0, $i, 1)) }}</option>
+                    @endfor
                 </select>
             </div>
+        </form>
 
-            <form method="GET" action="{{ route('data-ps.mitra-pie-chart') }}">
-                <div class="form-group">
-                    <label for="sto">Pilih STO:</label> <!-- Change the label to reflect STO selection -->
-                    <select name="sto" id="sto" class="form-control">
-                        <option value="">-- Pilih STO --</option>
-                        @foreach ($stoList as $sto)
-                            <!-- Assuming $stoList contains STOs from the backend -->
-                            <!-- Assuming $stoList contains STOs from the backend -->
-                            <option value="{{ $sto }}" {{ request('sto') == $sto ? 'selected' : '' }}>
-                                {{ $sto }}</option>
-                        @endforeach
-                    </select>
+        @if ($selectedMonth)
+            <div class="row">
+                <!-- Left Table (Current Month) -->
+                <div class="col-lg-6">
+                    <div class="table-container">
+                        <h3>Current Month ({{ date('F', mktime(0, 0, 0, $selectedMonth, 1)) }})</h3>
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Tanggal</th>
+                                    <th>PS Harian</th>
+                                    <th>Realisasi MTD</th>
+                                    <th>Gimik</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @php
+                                    $cumulativeMTD = 0;
+                                @endphp
+                                @foreach ($currentMonthData as $data)
+                                    @php
+                                        $cumulativeMTD += $data->ps_harian;
+                                    @endphp
+                                    <tr>
+                                        <td>{{ $data->tgl }}</td>
+                                        <td>{{ $data->ps_harian }}</td>
+                                        <td>{{ $cumulativeMTD }}</td>
+                                        <td>
+                                            <select class="form-control" name="gimik_{{ $data->tgl }}">
+                                                <option value="achieve">Achieve</option>
+                                                <option value="not_achieve">Not Achieve</option>
+                                            </select>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
 
-                <button type="submit" class="btn btn-primary">Filter</button>
-            </form>
-
-            <div class="chart-container">
-                <canvas id="mitraChart"></canvas>
+                <!-- Right Table (Previous Month) -->
+                <div class="col-lg-6">
+                    <div class="table-container">
+                        <h3>Previous Month ({{ date('F', mktime(0, 0, 0, $selectedMonth - 1, 1)) }})</h3>
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Tanggal</th>
+                                    <th>Realisasi Bulan Lalu</th>
+                                    <th>Realisasi MTD</th> <!-- Kolom untuk Realisasi MTD bulan lalu -->
+                                    <th>GAP MTD</th> <!-- Kolom untuk GAP MTD -->
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @php
+                                    $cumulativeMTD = 0;
+                                    $cumulativePreviousMTD = 0;
+                                @endphp
+                                @foreach ($currentMonthData as $index => $data)
+                                    @php
+                                        // Tambah PS Harian bulan ini ke MTD bulan ini
+                                        $cumulativeMTD += $data->ps_harian;
+                                        
+                                        // Ambil data bulan lalu untuk tanggal yang sama
+                                        $previousData = $previousMonthData[$index] ?? null;
+                                        $previousDayPS = $previousData ? $previousData->ps_harian : 0;
+                            
+                                        // Tambah PS Harian bulan lalu ke MTD bulan lalu
+                                        $cumulativePreviousMTD += $previousDayPS;
+                            
+                                        // Hitung GAP MTD (Realisasi bulan ini - Realisasi bulan lalu)
+                                        $gapMTD = $cumulativeMTD - $cumulativePreviousMTD;
+                                    @endphp
+                                    <tr>
+                                        <td>{{ $data->tgl }}</td>
+                                        <td>{{ $previousDayPS }}</td>
+                                        <td>{{ $cumulativePreviousMTD }}</td>
+                                        <td>{{ $gapMTD }}</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
-
-            <script>
-                var ctx = document.getElementById('mitraChart').getContext('2d');
-                var mitraLabels = @json($mitraAnalysis->pluck('Mitra')); // Use Mitra as labels
-                var mitraData = @json($mitraAnalysis->pluck('total')); // Use the Mitra data for the pie chart
-
-                var mitraChart = new Chart(ctx, {
-                    type: 'pie',
-                    data: {
-                        labels: mitraLabels,
-                        datasets: [{
-                            label: 'Mitra Data',
-                            data: mitraData,
-                            backgroundColor: [
-                                'rgba(54, 162, 235, 0.7)', // Blue
-                                'rgba(153, 102, 255, 0.7)', // Purple
-                                'rgba(255, 99, 132, 0.7)', // Red
-                                'rgba(75, 192, 192, 0.7)', // Green
-                                'rgba(255, 206, 86, 0.7)', // Yellow
-                                'rgba(255, 159, 64, 0.7)', // Orange
-                            ],
-
-                            borderColor: [
-                                'rgba(54, 162, 235, 1)', // Blue
-                                'rgba(153, 102, 255, 1)', // Purple
-                                'rgba(255, 99, 132, 1)', // Red
-                                'rgba(75, 192, 192, 1)', // Green
-                                'rgba(255, 206, 86, 1)', // Yellow
-                                'rgba(255, 159, 64, 1)', // Orange
-                            ],
-                            borderWidth: 2,
-                            hoverOffset: 10
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        plugins: {
-                            legend: {
-                                position: 'top',
-                            },
-                            tooltip: {
-                                callbacks: {
-                                    label: function(tooltipItem) {
-                                        return tooltipItem.label + ': ' + tooltipItem.raw;
-                                    }
-                                }
-                            },
-                            title: {
-                                display: true,
-                                text: 'Mitra Pie Chart',
-                                font: {
-                                    size: 24,
-                                    weight: 'bold'
-                                }
-                            }
-                        }
-                    }
-                });
-            </script>
+        @endif
     </div>
 </body>
 

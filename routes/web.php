@@ -67,11 +67,17 @@ Route::prefix('data-ps')->group(function () {
     Route::get('/analysis/sto', [DataPsController::class, 'analysisBySto'])->name('data-ps.sto-analysis');
     Route::get('/data-ps/code-analysis', [DataPsController::class, 'analysisByCode'])->name('data-ps.code-analysis');
     Route::get('/data-ps/month-analysis', [DataPsController::class, 'analysisByMonth'])->name('data-ps.month-analysis');
-    Route::get('/data-ps/mitra-analysis', [DataPsController::class, 'analysisByIdMitra'])->name('data-ps.mitra-analysis'); 
+    Route::get('/data-ps/mitra-analysis', [DataPsController::class, 'analysisByMitra'])->name('data-ps.mitra-analysis');
     Route::get('/data-ps/sto-chart', [DataPsController::class, 'stoChart'])->name('data-ps.sto-chart');
+    Route::get('/data-ps/sto-pie-chart', [DataPsController::class, 'stoPieChart'])->name('data-ps.sto-pie-chart');
+    Route::get('/data-ps/mitra-bar-chart', [DataPsController::class, 'mitraBarChartAnalysis'])->name('data-ps.mitra-bar-chart');
     Route::get('/data-ps/mitra-pie-chart', [DataPsController::class, 'mitraPieChartAnalysis'])->name('data-ps.mitra-pie-chart');
     Route::get('/data-ps/day-analysis', [DataPsController::class, 'dayAnalysis'])->name('data-ps.day-analysis');
-    
+
+    // Route untuk analisis target
+    Route::get('/data-ps/target-tracking', [DataPsController::class, 'targetTracking'])->name('data-ps.target-tracking');
+    Route::get('/data-ps/sales-chart', [DataPsController::class, 'salesChart'])->name('data-ps.sales-chart');
+
     // Route untuk import Excel
     Route::post('/import-excel', [DataPsController::class, 'importExcel'])->name('data-ps.import');
 });

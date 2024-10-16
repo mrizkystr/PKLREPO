@@ -18,10 +18,8 @@
     <!-- Bootstrap JS -->
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
 
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
     <style>
+        /* Global Body Styling */
         body {
             background: linear-gradient(135deg, #f3f4f6, #a2c2e9);
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -29,6 +27,7 @@
             padding: 0;
         }
 
+        /* Sidebar Styling */
         .dropdown-menu {
             background: linear-gradient(180deg, #36d1dc, #5b86e5);
             /* Same as sidebar */
@@ -88,34 +87,10 @@
             font-weight: bold;
             color: white;
         }
-        
-        canvas {
-            margin-top: 20px;
-            width: 100% !important;
-            height: auto !important;
-        }
 
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
+        .main-content {
+            margin-left: 250px;
             padding: 20px;
-        }
-
-        h1 {
-            text-align: center;
-            margin-bottom: 40px;
-            font-weight: bold;
-        }
-
-        .table-container {
-            background: linear-gradient(135deg, #5b86e5, #36d1dc);
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
-            margin: 30px auto;
-            width: 90%;
-            display: flex;
-            justify-content: center;
         }
 
         .table {
@@ -141,10 +116,6 @@
             border: 1px solid #ddd;
         }
 
-        tbody tr:nth-child(even) {
-            background-color: #f2f2f2;
-        }
-
         tbody tr:hover {
             background-color: #e1f5fe;
         }
@@ -155,28 +126,6 @@
             padding: 10px 20px;
             border-radius: 5px;
             color: white;
-            text-decoration: none;
-        }
-
-        .btn-primary:hover {
-            background-color: #0056b3;
-        }
-
-        .btn-secondary {
-            margin-left: 10px;
-        }
-
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
-
-        .main-content {
-            margin-left: 250px;
-            /* Adjust for sidebar */
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
         }
     </style>
 </head>
@@ -190,10 +139,35 @@
             PS</a>
         <a href="{{ route('sales-codes.index') }}"
             class="sidebar-item @if (request()->routeIs('sales-codes.index')) active @endif">Sales Codes</a>
-        <a href="{{ route('data-ps.sto-chart') }}"
-            class="sidebar-item @if (request()->routeIs('data-ps.sto-chart')) active @endif">Bar Chart Data</a>
-        <a href="{{ route('data-ps.mitra-pie-chart') }}"
-            class="sidebar-item @if (request()->routeIs('data-ps.mitra-pie-chart')) active @endif">Pie Chart Data</a>
+
+        <!-- Dropdown for STO Charts -->
+        <div class="dropdown">
+            <a href="#" class="dropdown-toggle sidebar-item" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">
+                STO Charts
+            </a>
+            <div class="dropdown-menu">
+                <a href="{{ route('data-ps.sto-chart') }}"
+                    class="dropdown-item @if (request()->routeIs('data-ps.sto-chart')) active @endif">STO Chart</a>
+                <a href="{{ route('data-ps.sto-pie-chart') }}"
+                    class="dropdown-item @if (request()->routeIs('data-ps.sto-pie-chart')) active @endif">STO Pie Chart</a>
+            </div>
+        </div>
+
+        <!-- Dropdown for Mitra Charts -->
+        <div class="dropdown">
+            <a href="#" class="dropdown-toggle sidebar-item" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">
+                Mitra Charts
+            </a>
+            <div class="dropdown-menu">
+                <a href="{{ route('data-ps.mitra-bar-chart') }}"
+                    class="dropdown-item @if (request()->routeIs('data-ps.mitra-bar-chart')) active @endif">Mitra Chart</a>
+                <a href="{{ route('data-ps.mitra-pie-chart') }}"
+                    class="dropdown-item @if (request()->routeIs('data-ps.mitra-pie-chart')) active @endif">Mitra Pie Chart</a>
+            </div>
+        </div>
+
         <!-- PS Overview Dropdown -->
         <div class="dropdown">
             <a href="#" class="dropdown-toggle sidebar-item" data-toggle="dropdown" aria-haspopup="true"
@@ -202,83 +176,118 @@
             </a>
             <div class="dropdown-menu">
                 <a href="{{ route('data-ps.sto-analysis') }}"
-                    class="dropdown-item @if (request()->routeIs('data-ps.sto-analysis')) active @endif">
-                    PS Analysis by STO
-                </a>
+                    class="dropdown-item @if (request()->routeIs('data-ps.sto-analysis')) active @endif">PS Analysis by STO</a>
                 <a href="{{ route('data-ps.month-analysis') }}"
-                    class="dropdown-item @if (request()->routeIs('data-ps.month-analysis')) active @endif">
-                    PS Analysis By Month
-                </a>
+                    class="dropdown-item @if (request()->routeIs('data-ps.month-analysis')) active @endif">PS Analysis By Month</a>
                 <a href="{{ route('data-ps.code-analysis') }}"
-                    class="dropdown-item @if (request()->routeIs('data-ps.code-analysis')) active @endif">
-                    PS Analysis By Code
-                </a>
+                    class="dropdown-item @if (request()->routeIs('data-ps.code-analysis')) active @endif">PS Analysis By Code</a>
                 <a href="{{ route('data-ps.mitra-analysis') }}"
-                    class="dropdown-item @if (request()->routeIs('data-ps.mitra-analysis')) active @endif">
-                    PS Analysis by ID Mitra
-                </a>
+                    class="dropdown-item @if (request()->routeIs('data-ps.mitra-analysis')) active @endif">PS Analysis by ID Mitra</a>
                 <a href="{{ route('data-ps.day-analysis') }}"
-                    class="dropdown-item @if (request()->routeIs('data-ps.day-analysis')) active @endif">
-                    PS Data Analysis by Day
-                </a>
+                    class="dropdown-item @if (request()->routeIs('data-ps.day-analysis')) active @endif">PS Data Analysis by Day</a>
+            </div>
+        </div>
+
+        <!-- New Dropdown for Sales Chart and Target Tracking -->
+        <div class="dropdown">
+            <a href="#" class="dropdown-toggle sidebar-item" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">
+                Trend Sales
+            </a>
+            <div class="dropdown-menu">
+                <a href="{{ route('data-ps.target-tracking') }}"
+                    class="dropdown-item @if (request()->routeIs('data-ps.target-tracking')) active @endif">Target Tracking</a>
+                <a href="{{ route('data-ps.sales-chart') }}"
+                    class="dropdown-item @if (request()->routeIs('data-ps.sales-chart')) active @endif">Tracking Chart</a>
             </div>
         </div>
     </div>
-
+    
     <!-- Main Content -->
     <div class="main-content">
-        <div class="container">
-            <h1>Data Analysis PS per Hari</h1>
-            <form action="{{ route('data-ps.day-analysis') }}" method="GET">
-                <!-- Filter by Day -->
-                <div class="form-group">
-                    <label for="tanggal_ps">Pilih Tanggal:</label>
-                    <input type="date" name="tanggal_ps" id="tanggal_ps" class="form-control"
-                        value="{{ $tanggal_ps ?? '' }}">
-                </div>
+        <h1>Data Analysis PS per Hari</h1>
 
-                <button type="submit" class="btn btn-primary">Filter</button>
-                <a href="{{ route('data-ps.day-analysis') }}" class="btn btn-secondary">Lihat Semua Data</a>
-            </form>
-
-            <!-- Display Analysis Table -->
-            <div class="table-container">
-                <div class="table-responsive">
-                    <table class="table table-striped">
-                        <thead>
-                            <tr>
-                                <th>Tanggal PS</th>
-                                <th>STO</th>
-                                <th>Nama SA</th>
-                                <th>ORDER ID</th>
-                                <th>ADDON</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach ($dayAnalysis as $analysis)
-                                <tr>
-                                    <td>{{ $analysis->tanggal }}</td>
-                                    <td>{{ $analysis->STO }}</td>
-                                    <td>{{ $analysis->Nama_SA }}</td>
-                                    <td>{{ $analysis->ORDER_ID }}</td>
-                                    <td>{{ $analysis->ADDON }}</td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- Back to List Button -->
-            <div class="text-center mt-4">
-                <a href="{{ route('data-ps.index') }}" class="btn btn-primary">Back to List</a>
-            </div>
+        <!-- Display Analysis Table -->
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Tanggal PS</th>
+                        <!-- Detail column -->
+                        <th>Detail</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach ($dayAnalysis as $analysis)
+                        <tr>
+                            <td>{{ $analysis->tanggal }}</td>
+                            <td>
+                                <button class="btn btn-primary show-details" data-tanggal="{{ $analysis->tanggal }}">
+                                    Show Details
+                                </button>
+                            </td>
+                        </tr>
+                        <!-- Tempat detail akan dimasukkan setelah AJAX -->
+                        <tr id="details-{{ $analysis->tanggal }}" style="display: none;">
+                            <td colspan="2">
+                                <div class="details-container"></div>
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
         </div>
     </div>
 
-    <!-- Bootstrap JS -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.1/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            // Ketika tombol Show Details diklik
+            $('.show-details').on('click', function() {
+                const tanggal = $(this).data('tanggal');
+                const detailsRow = $('#details-' + tanggal);
+                const container = detailsRow.find('.details-container');
+
+                // Periksa apakah detail sudah ditampilkan
+                if (detailsRow.is(':visible')) {
+                    detailsRow.hide();
+                    container.empty();
+                } else {
+                    // Panggil AJAX untuk mendapatkan data detail berdasarkan tanggal
+                    $.ajax({
+                        url: "{{ route('data-ps.day-analysis') }}",
+                        type: 'GET',
+                        data: {
+                            tanggal: tanggal
+                        },
+                        success: function(data) {
+                            let detailHtml = '<table class="table table-sm"><thead><tr>' +
+                                '<th>ORDER ID</th><th>CUSTOMER NAME</th><th>STO</th><th>Nama SA</th><th>ADDON</th>' +
+                                '</tr></thead><tbody>';
+
+                            data.forEach(function(item) {
+                                detailHtml += '<tr>' +
+                                    '<td>' + item.ORDER_ID + '</td>' +
+                                    '<td>' + item.CUSTOMER_NAME + '</td>' +
+                                    '<td>' + item.STO + '</td>' +
+                                    '<td>' + item.Nama_SA + '</td>' +
+                                    '<td>' + item.ADDON + '</td>' +
+                                    '</tr>';
+                            });
+
+                            detailHtml += '</tbody></table>';
+
+                            // Masukkan detail ke dalam kontainer dan tampilkan baris detail
+                            container.html(detailHtml);
+                            detailsRow.show();
+                        },
+                        error: function() {
+                            alert('Gagal mendapatkan data.');
+                        }
+                    });
+                }
+            });
+        });
+    </script>
 </body>
 
 </html>

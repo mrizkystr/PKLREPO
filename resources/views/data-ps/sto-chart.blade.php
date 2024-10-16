@@ -17,24 +17,21 @@
 
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
 
     <style>
-         body {
+        body {
             background: linear-gradient(135deg, #eef2f3, #8e9eab);
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
             padding: 0;
             color: #333;
-            overflow-x: hidden;
         }
 
+        /* Sidebar Styling */
         .dropdown-menu {
             background: linear-gradient(180deg, #36d1dc, #5b86e5);
-            /* Same as sidebar */
             border: none;
-            /* Remove the default border */
             box-shadow: none;
-            /* Remove the default shadow */
         }
 
         .dropdown-item {
@@ -43,12 +40,10 @@
 
         .dropdown-item:hover {
             background-color: #007bff;
-            /* Keep the hover effect consistent */
         }
 
         .sidebar a.active {
             background-color: #ffdd57;
-            /* Highlight active item */
         }
 
         .sidebar {
@@ -91,12 +86,20 @@
         .main-content {
             margin-left: 250px;
             padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
         }
 
+        /* Increase canvas size */
         canvas {
             margin-top: 20px;
-            width: 100% !important;
-            height: auto !important;
+            width: 1200px !important;
+            height: 600px !important;
+            max-width: 100%;
+            max-height: auto;
         }
     </style>
 </head>
@@ -110,10 +113,35 @@
             PS</a>
         <a href="{{ route('sales-codes.index') }}"
             class="sidebar-item @if (request()->routeIs('sales-codes.index')) active @endif">Sales Codes</a>
-        <a href="{{ route('data-ps.sto-chart') }}"
-            class="sidebar-item @if (request()->routeIs('data-ps.sto-chart')) active @endif">Bar Chart Data</a>
-        <a href="{{ route('data-ps.mitra-pie-chart') }}"
-            class="sidebar-item @if (request()->routeIs('data-ps.mitra-pie-chart')) active @endif">Pie Chart Data</a>
+
+        <!-- Dropdown for STO Charts -->
+        <div class="dropdown">
+            <a href="#" class="dropdown-toggle sidebar-item" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">
+                STO Charts
+            </a>
+            <div class="dropdown-menu">
+                <a href="{{ route('data-ps.sto-chart') }}"
+                    class="dropdown-item @if (request()->routeIs('data-ps.sto-chart')) active @endif">STO Chart</a>
+                <a href="{{ route('data-ps.sto-pie-chart') }}"
+                    class="dropdown-item @if (request()->routeIs('data-ps.sto-pie-chart')) active @endif">STO Pie Chart</a>
+            </div>
+        </div>
+
+        <!-- Dropdown for Mitra Charts -->
+        <div class="dropdown">
+            <a href="#" class="dropdown-toggle sidebar-item" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">
+                Mitra Charts
+            </a>
+            <div class="dropdown-menu">
+                <a href="{{ route('data-ps.mitra-bar-chart') }}"
+                    class="dropdown-item @if (request()->routeIs('data-ps.mitra-bar-chart')) active @endif">Mitra Chart</a>
+                <a href="{{ route('data-ps.mitra-pie-chart') }}"
+                    class="dropdown-item @if (request()->routeIs('data-ps.mitra-pie-chart')) active @endif">Mitra Pie Chart</a>
+            </div>
+        </div>
+
         <!-- PS Overview Dropdown -->
         <div class="dropdown">
             <a href="#" class="dropdown-toggle sidebar-item" data-toggle="dropdown" aria-haspopup="true"
@@ -122,28 +150,33 @@
             </a>
             <div class="dropdown-menu">
                 <a href="{{ route('data-ps.sto-analysis') }}"
-                    class="dropdown-item @if (request()->routeIs('data-ps.sto-analysis')) active @endif">
-                    PS Analysis by STO
-                </a>
+                    class="dropdown-item @if (request()->routeIs('data-ps.sto-analysis')) active @endif">PS Analysis by STO</a>
                 <a href="{{ route('data-ps.month-analysis') }}"
-                    class="dropdown-item @if (request()->routeIs('data-ps.month-analysis')) active @endif">
-                    PS Analysis By Month
-                </a>
+                    class="dropdown-item @if (request()->routeIs('data-ps.month-analysis')) active @endif">PS Analysis By Month</a>
                 <a href="{{ route('data-ps.code-analysis') }}"
-                    class="dropdown-item @if (request()->routeIs('data-ps.code-analysis')) active @endif">
-                    PS Analysis By Code
-                </a>
+                    class="dropdown-item @if (request()->routeIs('data-ps.code-analysis')) active @endif">PS Analysis By Code</a>
                 <a href="{{ route('data-ps.mitra-analysis') }}"
-                    class="dropdown-item @if (request()->routeIs('data-ps.mitra-analysis')) active @endif">
-                    PS Analysis by ID Mitra
-                </a>
+                    class="dropdown-item @if (request()->routeIs('data-ps.mitra-analysis')) active @endif">PS Analysis by ID Mitra</a>
                 <a href="{{ route('data-ps.day-analysis') }}"
-                    class="dropdown-item @if (request()->routeIs('data-ps.day-analysis')) active @endif">
-                    PS Data Analysis by Day
-                </a>
+                    class="dropdown-item @if (request()->routeIs('data-ps.day-analysis')) active @endif">PS Data Analysis by Day</a>
+            </div>
+        </div>
+
+        <!-- New Dropdown for Sales Chart and Target Tracking -->
+        <div class="dropdown">
+            <a href="#" class="dropdown-toggle sidebar-item" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">
+                Trend Sales
+            </a>
+            <div class="dropdown-menu">
+                <a href="{{ route('data-ps.target-tracking') }}"
+                    class="dropdown-item @if (request()->routeIs('data-ps.target-tracking')) active @endif">Target Tracking</a>
+                <a href="{{ route('data-ps.sales-chart') }}"
+                    class="dropdown-item @if (request()->routeIs('data-ps.sales-chart')) active @endif">Tracking Chart</a>
             </div>
         </div>
     </div>
+
 
     <!-- Main Content -->
     <div class="main-content">
@@ -155,6 +188,7 @@
                 <label for="bulan_ps">Pilih Bulan:</label>
                 <select name="bulan_ps" id="bulan_ps" class="form-control">
                     <option value="">Semua Bulan</option>
+                    <!-- Add options for each month dynamically -->
                     <option value="Januari" {{ request('bulan_ps') === 'Januari' ? 'selected' : '' }}>Januari</option>
                     <option value="Februari" {{ request('bulan_ps') === 'Februari' ? 'selected' : '' }}>Februari
                     </option>
@@ -177,7 +211,7 @@
             <div class="form-group">
                 <label for="id_mitra">ID Mitra:</label>
                 <select name="id_mitra" id="id_mitra" class="form-control">
-                    <option value="">-- Pilih ID Mitra --</option>
+                    <option value="">Semua Mitra</option>
                     @foreach ($mitraList as $mitra)
                         <option value="{{ $mitra }}" {{ request('id_mitra') == $mitra ? 'selected' : '' }}>
                             {{ $mitra }}</option>
@@ -188,55 +222,60 @@
             <button type="submit" class="btn btn-primary">Filter</button>
         </form>
 
+        <!-- STO Chart Canvas -->
         <canvas id="stoChart"></canvas>
 
+        <!-- ChartJS Script -->
         <script>
             var ctx = document.getElementById('stoChart').getContext('2d');
             var stoChart = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: @json($labels), // gunakan $labels
+                    labels: @json($labels),
                     datasets: [{
-                        label: 'STO Data',
-                        data: @json($data), // gunakan $data
-                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                        borderColor: 'rgba(75, 192, 192, 1)',
+                        label: 'STO',
+                        data: @json($data),
+                        backgroundColor: [
+                            'rgba(255, 99, 132, 0.7)',
+                            'rgba(54, 162, 235, 0.7)',
+                            'rgba(255, 206, 86, 0.7)',
+                            'rgba(75, 192, 192, 0.7)',
+                            'rgba(153, 102, 255, 0.7)',
+                            'rgba(255, 159, 64, 0.7)'
+                        ],
+                        borderColor: [
+                            'rgba(255, 99, 132, 1)',
+                            'rgba(54, 162, 235, 1)',
+                            'rgba(255, 206, 86, 1)',
+                            'rgba(75, 192, 192, 1)',
+                            'rgba(153, 102, 255, 1)',
+                            'rgba(255, 159, 64, 1)'
+                        ],
                         borderWidth: 1
                     }]
                 },
                 options: {
-                    responsive: true,
                     scales: {
                         y: {
-                            beginAtZero: true,
-                            title: {
-                                display: true,
-                                text: 'Jumlah'
-                            }
-                        },
-                        x: {
-                            title: {
-                                display: true,
-                                text: 'STO'
-                            }
+                            beginAtZero: true
                         }
                     },
                     plugins: {
-                        legend: {
-                            display: true,
-                            position: 'top',
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function(tooltipItem) {
-                                    return tooltipItem.dataset.label + ': ' + tooltipItem.raw; // Show raw value
-                                }
+                        datalabels: {
+                            anchor: 'center', // Position the labels inside the bars
+                            align: 'center', // Align labels to the center of the bars
+                            color: 'white', // Change the label color to contrast with the bar colors
+                            font: {
+                                weight: 'bold',
+                                size: 16 // Increase font size for better readability
                             }
                         }
                     }
-                }
+                },
+                plugins: [ChartDataLabels] // Enable the datalabels plugin
             });
         </script>
+
     </div>
 </body>
 

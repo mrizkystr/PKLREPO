@@ -164,10 +164,35 @@
             PS</a>
         <a href="{{ route('sales-codes.index') }}"
             class="sidebar-item @if (request()->routeIs('sales-codes.index')) active @endif">Sales Codes</a>
-        <a href="{{ route('data-ps.sto-chart') }}"
-            class="sidebar-item @if (request()->routeIs('data-ps.sto-chart')) active @endif">Bar Chart Data</a>
-        <a href="{{ route('data-ps.mitra-pie-chart') }}"
-            class="sidebar-item @if (request()->routeIs('data-ps.mitra-pie-chart')) active @endif">Pie Chart Data</a>
+
+        <!-- Dropdown for STO Charts -->
+        <div class="dropdown">
+            <a href="#" class="dropdown-toggle sidebar-item" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">
+                STO Charts
+            </a>
+            <div class="dropdown-menu">
+                <a href="{{ route('data-ps.sto-chart') }}"
+                    class="dropdown-item @if (request()->routeIs('data-ps.sto-chart')) active @endif">STO Chart</a>
+                <a href="{{ route('data-ps.sto-pie-chart') }}"
+                    class="dropdown-item @if (request()->routeIs('data-ps.sto-pie-chart')) active @endif">STO Pie Chart</a>
+            </div>
+        </div>
+
+        <!-- Dropdown for Mitra Charts -->
+        <div class="dropdown">
+            <a href="#" class="dropdown-toggle sidebar-item" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">
+                Mitra Charts
+            </a>
+            <div class="dropdown-menu">
+                <a href="{{ route('data-ps.mitra-bar-chart') }}"
+                    class="dropdown-item @if (request()->routeIs('data-ps.mitra-bar-chart')) active @endif">Mitra Chart</a>
+                <a href="{{ route('data-ps.mitra-pie-chart') }}"
+                    class="dropdown-item @if (request()->routeIs('data-ps.mitra-pie-chart')) active @endif">Mitra Pie Chart</a>
+            </div>
+        </div>
+
         <!-- PS Overview Dropdown -->
         <div class="dropdown">
             <a href="#" class="dropdown-toggle sidebar-item" data-toggle="dropdown" aria-haspopup="true"
@@ -176,28 +201,33 @@
             </a>
             <div class="dropdown-menu">
                 <a href="{{ route('data-ps.sto-analysis') }}"
-                    class="dropdown-item @if (request()->routeIs('data-ps.sto-analysis')) active @endif">
-                    PS Analysis by STO
-                </a>
+                    class="dropdown-item @if (request()->routeIs('data-ps.sto-analysis')) active @endif">PS Analysis by STO</a>
                 <a href="{{ route('data-ps.month-analysis') }}"
-                    class="dropdown-item @if (request()->routeIs('data-ps.month-analysis')) active @endif">
-                    PS Analysis By Month
-                </a>
+                    class="dropdown-item @if (request()->routeIs('data-ps.month-analysis')) active @endif">PS Analysis By Month</a>
                 <a href="{{ route('data-ps.code-analysis') }}"
-                    class="dropdown-item @if (request()->routeIs('data-ps.code-analysis')) active @endif">
-                    PS Analysis By Code
-                </a>
+                    class="dropdown-item @if (request()->routeIs('data-ps.code-analysis')) active @endif">PS Analysis By Code</a>
                 <a href="{{ route('data-ps.mitra-analysis') }}"
-                    class="dropdown-item @if (request()->routeIs('data-ps.mitra-analysis')) active @endif">
-                    PS Analysis by ID Mitra
-                </a>
+                    class="dropdown-item @if (request()->routeIs('data-ps.mitra-analysis')) active @endif">PS Analysis by ID Mitra</a>
                 <a href="{{ route('data-ps.day-analysis') }}"
-                    class="dropdown-item @if (request()->routeIs('data-ps.day-analysis')) active @endif">
-                    PS Data Analysis by Day
-                </a>
+                    class="dropdown-item @if (request()->routeIs('data-ps.day-analysis')) active @endif">PS Data Analysis by Day</a>
+            </div>
+        </div>
+
+        <!-- New Dropdown for Sales Chart and Target Tracking -->
+        <div class="dropdown">
+            <a href="#" class="dropdown-toggle sidebar-item" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">
+                Trend Sales
+            </a>
+            <div class="dropdown-menu">
+                <a href="{{ route('data-ps.target-tracking') }}"
+                    class="dropdown-item @if (request()->routeIs('data-ps.target-tracking')) active @endif">Target Tracking</a>
+                <a href="{{ route('data-ps.sales-chart') }}"
+                    class="dropdown-item @if (request()->routeIs('data-ps.sales-chart')) active @endif">Tracking Chart</a>
             </div>
         </div>
     </div>
+
 
     <!-- Main Content: Data PS Table -->
     <div class="main-content">

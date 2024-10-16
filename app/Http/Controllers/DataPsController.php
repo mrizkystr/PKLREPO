@@ -53,8 +53,6 @@ class DataPsController extends Controller
         return view('data-ps.sto-analysis', compact('stoAnalysis'));
     }
 
-
-
     public function analysisByMonth(Request $request)
     {
         $bulan = $request->input('bulan_ps'); // Ambil bulan dari request
@@ -78,11 +76,12 @@ class DataPsController extends Controller
         // Ambil bulan dari request
         $bulanPs = $request->input('bulan_ps');
 
-        // Ambil analisis berdasarkan kode_sales dengan join ke tabel sales_codes
-        $codeAnalysis = DataPsAgustusKujangSql::select(
+        // Base query
+        $query = DataPsAgustusKujangSql::select(
             'data_ps_agustus_kujang_sql.Bulan_PS',
             'data_ps_agustus_kujang_sql.STO',
-            'data_ps_agustus_kujang_sql.Kode_sales', // Mengambil Kode_sales dari DataPS
+            'data_ps_agustus_kujang_sql.Kode_sales',
+            'data_ps_agustus_kujang_sql.Nama_SA', // Menambahkan Nama_SA dari tabel sales_codes
             DB::raw("
             CASE 
                 WHEN data_ps_agustus_kujang_sql.Bulan_PS = 'Agustus' THEN sales_codes.kode_agen
@@ -90,10 +89,9 @@ class DataPsController extends Controller
                 ELSE NULL
             END as kode_selected
         "),
-            DB::raw("COUNT(DISTINCT data_ps_agustus_kujang_sql.id) as total") // Menghitung jumlah data unik
+            DB::raw("COUNT(DISTINCT data_ps_agustus_kujang_sql.id) as total")
         )
             ->leftJoin('sales_codes', function ($join) {
-                // Menghubungkan data berdasarkan STO dan kode sales
                 $join->on('data_ps_agustus_kujang_sql.STO', '=', 'sales_codes.sto')
                     ->on(function ($query) {
                         $query->where('data_ps_agustus_kujang_sql.Bulan_PS', 'Agustus')
@@ -101,68 +99,93 @@ class DataPsController extends Controller
                             ->orWhere('data_ps_agustus_kujang_sql.Bulan_PS', 'September')
                             ->whereColumn('data_ps_agustus_kujang_sql.Kode_sales', 'sales_codes.kode_baru');
                     });
-            })
-            ->when($bulanPs, function ($query) use ($bulanPs) {
-                return $query->where('data_ps_agustus_kujang_sql.Bulan_PS', $bulanPs);
-            })
-            ->groupBy(
-                'data_ps_agustus_kujang_sql.Bulan_PS',
-                'data_ps_agustus_kujang_sql.STO',
-                'data_ps_agustus_kujang_sql.Kode_sales',
-                'kode_selected'
-            ) // Mengelompokkan berdasarkan Bulan, STO, Kode_sales, dan kode yang dipilih
-            ->orderBy('data_ps_agustus_kujang_sql.Bulan_PS', 'asc') // Urutkan berdasarkan Bulan
-            ->orderBy('data_ps_agustus_kujang_sql.STO', 'asc') // Urutkan berdasarkan STO
-            ->orderBy('kode_selected', 'asc') // Urutkan berdasarkan Kode
-            ->get();
+            });
 
-        // Memisahkan data per kode untuk ditampilkan di view
-        $analysisPerCode = $codeAnalysis->groupBy('Bulan_PS');
+        // Apply bulan filter if selected
+        if ($bulanPs) {
+            $query->where('data_ps_agustus_kujang_sql.Bulan_PS', $bulanPs);
+        }
 
-        // Menggunakan analysisPerCode untuk view
-        return view('data-ps.code-analysis', compact('analysisPerCode'));
-    }
-
-    public function analysisByIdMitra(Request $request)
-    {
-        // Ambil bulan dari request
-        $bulanPs = $request->input('bulan_ps');
-        $selectedMitra = $request->input('id_mitra'); // Menyimpan id mitra yang terpilih
-
-        // Ambil daftar ID Mitra dari tabel data_ps_agustus_kujang_sql atau tabel lain yang sesuai
-        $mitraList = DataPsAgustusKujangSql::distinct()->pluck('Mitra');
-
-        // Ambil analisis berdasarkan id_mitra dengan join ke tabel sales_codes
-        $mitraAnalysis = DataPsAgustusKujangSql::select(
+        // Group and order the results
+        $codeAnalysis = $query->groupBy(
             'data_ps_agustus_kujang_sql.Bulan_PS',
             'data_ps_agustus_kujang_sql.STO',
-            'data_ps_agustus_kujang_sql.Mitra',
-            'sales_codes.id_mitra',
-            DB::raw("COUNT(DISTINCT data_ps_agustus_kujang_sql.id) as total")
+            'data_ps_agustus_kujang_sql.Kode_sales',
+            'data_ps_agustus_kujang_sql.Nama_SA', // Group by Nama_SA
+            DB::raw('kode_selected')
         )
-            ->leftJoin('sales_codes', function ($join) {
-                $join->on('data_ps_agustus_kujang_sql.STO', '=', 'sales_codes.sto')
-                    ->on('data_ps_agustus_kujang_sql.Mitra', '=', 'sales_codes.id_mitra'); // Menghubungkan Mitra dengan id_mitra
-            })
-            ->when($bulanPs, function ($query) use ($bulanPs) {
-                return $query->where('data_ps_agustus_kujang_sql.Bulan_PS', $bulanPs);
-            })
-            ->when($selectedMitra, function ($query) use ($selectedMitra) {
-                return $query->where('data_ps_agustus_kujang_sql.Mitra', $selectedMitra);
-            })
-            ->groupBy(
-                'data_ps_agustus_kujang_sql.Bulan_PS',
-                'data_ps_agustus_kujang_sql.STO',
-                'data_ps_agustus_kujang_sql.Mitra',
-                'sales_codes.id_mitra'
-            )
             ->orderBy('data_ps_agustus_kujang_sql.Bulan_PS', 'asc')
             ->orderBy('data_ps_agustus_kujang_sql.STO', 'asc')
-            ->orderBy('sales_codes.id_mitra', 'asc')
+            ->orderBy('kode_selected', 'asc')
             ->get();
 
-        // Kirimkan variabel $mitraList dan $selectedMitra ke view
-        return view('data-ps.mitra-analysis', compact('mitraList', 'selectedMitra', 'mitraAnalysis'));
+        // Organize and combine data
+        $organizedData = [];
+        foreach ($codeAnalysis as $item) {
+            $key = $item->kode_selected ?? $item->Kode_sales;
+            if (!isset($organizedData[$key])) {
+                $organizedData[$key] = [
+                    'kode' => $key,
+                    'nama' => $item->Nama_SA, // Include Nama_SA
+                    'total' => 0
+                ];
+            }
+            $organizedData[$key]['total'] += $item->total;
+        }
+
+        // Sort the organized data by total (descending)
+        uasort($organizedData, function ($a, $b) {
+            return $b['total'] - $a['total'];
+        });
+
+        return view('data-ps.code-analysis', [
+            'analysisPerCode' => $organizedData,
+            'selectedBulan' => $bulanPs
+        ]);
+    }
+
+    public function analysisByMitra(Request $request)
+    {
+        // Ambil input dari request
+        $bulanPs = $request->input('bulan_ps');
+        $selectedMitra = $request->input('mitra'); // Input untuk filter Mitra
+        $selectedSto = $request->input('sto'); // Input untuk filter STO
+
+        // Jika bulan_ps berbentuk nama bulan seperti 'Agustus', normalisasi input
+        $bulanPs = ucfirst(strtolower($bulanPs));
+
+        // Ambil daftar Mitra untuk ditampilkan di dropdown
+        $mitraList = DataPsAgustusKujangSql::when($selectedSto, function ($query) use ($selectedSto) {
+            // Filter Mitra berdasarkan STO yang dipilih
+            return $query->where('STO', $selectedSto);
+        })->distinct()->pluck('Mitra');
+
+        // Ambil daftar STO untuk ditampilkan di dropdown
+        $stoList = DataPsAgustusKujangSql::distinct()->pluck('STO');
+
+        // Query untuk analisis berdasarkan bulan, STO, dan mitra
+        $mitraAnalysis = DataPsAgustusKujangSql::select(
+            'data_ps_agustus_kujang_sql.Mitra',
+            DB::raw('COUNT(DISTINCT data_ps_agustus_kujang_sql.id) as total')
+        )
+            ->when($bulanPs, function ($query) use ($bulanPs) {
+                // Filter berdasarkan nama bulan di kolom Bulan_PS
+                return $query->where('Bulan_PS', $bulanPs);
+            })
+            ->when($selectedSto, function ($query) use ($selectedSto) {
+                // Filter berdasarkan STO yang dipilih
+                return $query->where('STO', $selectedSto);
+            })
+            ->when($selectedMitra, function ($query) use ($selectedMitra) {
+                // Filter berdasarkan Mitra yang dipilih
+                return $query->where('Mitra', $selectedMitra);
+            })
+            ->groupBy('Mitra')
+            ->orderBy('Mitra', 'asc')
+            ->get();
+
+        // Kirim data ke view
+        return view('data-ps.mitra-analysis', compact('stoList', 'mitraList', 'selectedSto', 'selectedMitra', 'bulanPs', 'mitraAnalysis'));
     }
 
     public function stoChart(Request $request)
@@ -196,6 +219,66 @@ class DataPsController extends Controller
         ]);
     }
 
+    public function stoPieChart(Request $request)
+    {
+        // Ambil bulan dan Mitra dari request
+        $bulanPs = $request->input('bulan_ps');
+        $selectedMitra = $request->input('id_mitra');
+
+        // Fetching data for pie chart with filters
+        $data = DataPsAgustusKujangSql::select('STO', DB::raw('count(*) as total'))
+            ->when($bulanPs, function ($query) use ($bulanPs) {
+                return $query->where('Bulan_PS', $bulanPs);
+            })
+            ->when($selectedMitra, function ($query) use ($selectedMitra) {
+                return $query->where('Mitra', $selectedMitra);
+            })
+            ->groupBy('STO')
+            ->get();
+
+        // Mengambil label dan data dari hasil query
+        $stoLabels = $data->pluck('STO');
+        $stoData = $data->pluck('total');
+
+        // Mengirim variabel ke view untuk pie chart
+        return view('data-ps.sto-pie-chart', [
+            'labels' => $stoLabels,
+            'data' => $stoData,
+            'bulan_ps' => $bulanPs,
+            'id_mitra' => $selectedMitra,
+            'mitraList' => DataPsAgustusKujangSql::distinct()->pluck('Mitra'), // List for filtering
+        ]);
+    }
+
+    public function mitraBarChartAnalysis(Request $request)
+    {
+        $selectedSto = $request->input('sto'); // Mengambil STO yang dipilih
+        $bulanPs = $request->input('bulan_ps'); // Opsional, jika ingin memfilter berdasarkan bulan juga
+
+        // Mengambil daftar STO unik untuk dropdown form
+        $stoList = DataPsAgustusKujangSql::distinct()->pluck('STO');
+
+        // Mengambil data Mitra berdasarkan STO yang dipilih
+        $mitraAnalysis = DataPsAgustusKujangSql::select(
+            'Mitra', // Group by Mitra
+            DB::raw("COUNT(DISTINCT id) as total") // Menghitung total item unik per Mitra
+        )
+            ->when($bulanPs, function ($query) use ($bulanPs) {
+                return $query->where('Bulan_PS', $bulanPs);
+            })
+            ->when($selectedSto, function ($query) use ($selectedSto) {
+                return $query->where('STO', $selectedSto); // Filter berdasarkan STO
+            })
+            ->groupBy('Mitra') // Mengelompokkan data berdasarkan Mitra
+            ->get();
+
+        // Menyiapkan data untuk ditampilkan dalam format yang sesuai untuk bar chart
+        $labels = $mitraAnalysis->pluck('Mitra')->toArray(); // Mengambil daftar nama Mitra sebagai label
+        $totals = $mitraAnalysis->pluck('total')->toArray(); // Mengambil jumlah total sebagai data untuk chart
+
+        // Return view dengan data analisis Mitra dan daftar STO untuk form
+        return view('data-ps.mitra-bar-chart', compact('stoList', 'selectedSto', 'labels', 'totals'));
+    }
 
     public function mitraPieChartAnalysis(Request $request)
     {
@@ -250,13 +333,136 @@ class DataPsController extends Controller
                 ->whereMonth('TGL_PS', Carbon::parse($bulan_ps)->month);
         }
 
-        // Select data for analysis by day, including STO and ADDON, no total
-        $dayAnalysis = $query->selectRaw('DATE(TGL_PS) as tanggal, STO, Nama_SA, ORDER_ID, ADDON')
-            ->groupBy('tanggal', 'STO', 'Nama_SA', 'ORDER_ID', 'ADDON')
+        // Select data for analysis by day, only displaying TGL_PS first
+        $dayAnalysis = $query->selectRaw('DATE(TGL_PS) as tanggal')
+            ->groupBy('tanggal')
             ->orderBy('tanggal', 'asc')
             ->get();
 
+        // Jika request berasal dari Ajax untuk menampilkan detail
+        if ($request->ajax()) {
+            $tglDetail = $request->input('tanggal');
+            $detailData = DataPsAgustusKujangSql::whereDate('TGL_PS', $tglDetail)
+                ->select('ORDER_ID', 'CUSTOMER_NAME', 'STO', 'Nama_SA', 'ADDON')
+                ->get();
+
+            return response()->json($detailData); // Kembalikan data sebagai JSON
+        }
+
         return view('data-ps.day-analysis', compact('dayAnalysis', 'tanggal_ps', 'bulan_ps', 'availableMonths'));
+    }
+
+    public function targetTracking(Request $request)
+    {
+        // Get selected month or use current month as default
+        $selectedMonth = $request->input('bulan', now()->month);
+
+        // Fetch data for the current month (left table)
+        $currentMonthData = DataPsAgustusKujangSql::select(
+            DB::raw('DATE(TGL_PS) as tgl'),
+            DB::raw('COUNT(*) as ps_harian')
+        )
+            ->whereMonth('TGL_PS', $selectedMonth)
+            ->groupBy(DB::raw('DATE(TGL_PS)'))
+            ->orderBy('tgl') // Ensure sorting by date
+            ->get();
+
+        // Calculate Previous Month
+        $previousMonth = $selectedMonth == 1 ? 12 : $selectedMonth - 1;
+
+        // Fetch data for the previous month (right table)
+        $previousMonthData = DataPsAgustusKujangSql::select(
+            DB::raw('DATE(TGL_PS) as tgl'),
+            DB::raw('COUNT(*) as ps_harian')
+        )
+            ->whereMonth('TGL_PS', $previousMonth)
+            ->groupBy(DB::raw('DATE(TGL_PS)'))
+            ->orderBy('tgl') // Ensure sorting by date
+            ->get();
+
+        // Create an associative array for the previous month data for easier access
+        $previousMonthArray = [];
+        foreach ($previousMonthData as $data) {
+            $previousMonthArray[$data->tgl] = $data->ps_harian;
+        }
+
+        // Prepare data for calculating GAP MTD
+        $gapMTD = [];
+        foreach ($currentMonthData as $currentData) {
+            $currentDate = $currentData->tgl;
+            $previousDataValue = $previousMonthArray[$currentDate] ?? 0; // Default to 0 if no previous data
+            $gapMTD[$currentDate] = $currentData->ps_harian - $previousDataValue; // Calculate GAP MTD
+        }
+
+        // Calculate total realizations for the previous month
+        $realisasiBulanLalu = $previousMonthData->sum('ps_harian');
+
+        return view('data-ps.target-tracking', compact('currentMonthData', 'previousMonthData', 'gapMTD', 'selectedMonth', 'realisasiBulanLalu'));
+    }
+
+    // New function to handle the chart diagram
+    public function salesChart(Request $request)
+    {
+        // Dapatkan bulan yang dipilih atau gunakan bulan saat ini sebagai default
+        $selectedMonth = $request->input('bulan_ps') ? date('n', strtotime($request->input('bulan_ps'))) : now()->month;
+
+        // Ambil data untuk bulan yang dipilih (misalnya Agustus)
+        $currentMonthData = DataPsAgustusKujangSql::select(
+            DB::raw('DAY(TGL_PS) as day'),
+            DB::raw('COUNT(*) as ps_harian')
+        )
+            ->whereMonth('TGL_PS', $selectedMonth)
+            ->groupBy(DB::raw('DAY(TGL_PS)'))
+            ->orderBy('day')
+            ->get();
+
+        // Hitung bulan sebelumnya
+        $previousMonth = $selectedMonth == 1 ? 12 : $selectedMonth - 1;
+
+        // Ambil data untuk bulan sebelumnya (misalnya Juli)
+        $previousMonthData = DataPsAgustusKujangSql::select(
+            DB::raw('DAY(TGL_PS) as day'),
+            DB::raw('COUNT(*) as ps_harian')
+        )
+            ->whereMonth('TGL_PS', $previousMonth)
+            ->groupBy(DB::raw('DAY(TGL_PS)'))
+            ->orderBy('day')
+            ->get();
+
+        // Siapkan data kumulatif untuk bulan saat ini
+        $currentMonthCumulative = [];
+        $currentSum = 0;
+
+        foreach ($currentMonthData as $data) {
+            $currentSum += $data->ps_harian;
+            $currentMonthCumulative[] = $currentSum;
+        }
+
+        // Siapkan data kumulatif untuk bulan sebelumnya
+        $previousMonthCumulative = [];
+        $previousSum = 0;
+
+        foreach ($previousMonthData as $data) {
+            $previousSum += $data->ps_harian;
+            $previousMonthCumulative[] = $previousSum;
+        }
+
+        // Pastikan bahwa jika tidak ada data untuk bulan sebelumnya, tetap tambahkan array dengan nol
+        if ($previousMonthCumulative == []) {
+            $previousMonthCumulative = array_fill(0, count($currentMonthCumulative), 0);
+        }
+
+        // Siapkan label untuk grafik (hari dalam bulan)
+        $labels = range(1, 31); // Asumsi maksimum 31 hari
+
+        // Kembalikan tampilan dengan data grafik
+        return view('data-ps.sales-chart', [
+            'currentMonthCumulative' => $currentMonthCumulative,
+            'previousMonthCumulative' => $previousMonthCumulative,
+            'labels' => $labels,
+            'selectedMonth' => $selectedMonth,
+            'previousMonth' => $previousMonth,
+        ]);
     }
 
     public function create()

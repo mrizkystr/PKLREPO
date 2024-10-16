@@ -90,23 +90,18 @@
             color: white;
         }
 
-        /* Container Styling */
         .container {
             max-width: 1200px;
             margin: auto;
             padding: 20px;
-            margin-left: 270px;
-            /* Adjusted margin for main content */
         }
 
-        /* Heading Styling */
         h1 {
             text-align: center;
             margin-bottom: 40px;
             font-weight: bold;
         }
 
-        /* Table Container Styling */
         .table-container {
             background: linear-gradient(135deg, #5b86e5, #36d1dc);
             padding: 20px;
@@ -115,7 +110,6 @@
             margin-top: 30px;
         }
 
-        /* Table Styling */
         .table {
             width: 100%;
             background-color: white;
@@ -147,7 +141,6 @@
             background-color: #e1f5fe;
         }
 
-        /* Back button styling */
         .btn-primary {
             background-color: #007bff;
             border: none;
@@ -159,7 +152,6 @@
             margin-top: 20px;
         }
 
-        /* Centering the content */
         .main-content {
             margin-left: 270px;
             display: flex;
@@ -179,10 +171,35 @@
             PS</a>
         <a href="{{ route('sales-codes.index') }}"
             class="sidebar-item @if (request()->routeIs('sales-codes.index')) active @endif">Sales Codes</a>
-        <a href="{{ route('data-ps.sto-chart') }}"
-            class="sidebar-item @if (request()->routeIs('data-ps.sto-chart')) active @endif">Bar Chart Data</a>
-        <a href="{{ route('data-ps.mitra-pie-chart') }}"
-            class="sidebar-item @if (request()->routeIs('data-ps.mitra-pie-chart')) active @endif">Pie Chart Data</a>
+
+        <!-- Dropdown for STO Charts -->
+        <div class="dropdown">
+            <a href="#" class="dropdown-toggle sidebar-item" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">
+                STO Charts
+            </a>
+            <div class="dropdown-menu">
+                <a href="{{ route('data-ps.sto-chart') }}"
+                    class="dropdown-item @if (request()->routeIs('data-ps.sto-chart')) active @endif">STO Chart</a>
+                <a href="{{ route('data-ps.sto-pie-chart') }}"
+                    class="dropdown-item @if (request()->routeIs('data-ps.sto-pie-chart')) active @endif">STO Pie Chart</a>
+            </div>
+        </div>
+
+        <!-- Dropdown for Mitra Charts -->
+        <div class="dropdown">
+            <a href="#" class="dropdown-toggle sidebar-item" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">
+                Mitra Charts
+            </a>
+            <div class="dropdown-menu">
+                <a href="{{ route('data-ps.mitra-bar-chart') }}"
+                    class="dropdown-item @if (request()->routeIs('data-ps.mitra-bar-chart')) active @endif">Mitra Chart</a>
+                <a href="{{ route('data-ps.mitra-pie-chart') }}"
+                    class="dropdown-item @if (request()->routeIs('data-ps.mitra-pie-chart')) active @endif">Mitra Pie Chart</a>
+            </div>
+        </div>
+
         <!-- PS Overview Dropdown -->
         <div class="dropdown">
             <a href="#" class="dropdown-toggle sidebar-item" data-toggle="dropdown" aria-haspopup="true"
@@ -191,25 +208,29 @@
             </a>
             <div class="dropdown-menu">
                 <a href="{{ route('data-ps.sto-analysis') }}"
-                    class="dropdown-item @if (request()->routeIs('data-ps.sto-analysis')) active @endif">
-                    PS Analysis by STO
-                </a>
+                    class="dropdown-item @if (request()->routeIs('data-ps.sto-analysis')) active @endif">PS Analysis by STO</a>
                 <a href="{{ route('data-ps.month-analysis') }}"
-                    class="dropdown-item @if (request()->routeIs('data-ps.month-analysis')) active @endif">
-                    PS Analysis By Month
-                </a>
+                    class="dropdown-item @if (request()->routeIs('data-ps.month-analysis')) active @endif">PS Analysis By Month</a>
                 <a href="{{ route('data-ps.code-analysis') }}"
-                    class="dropdown-item @if (request()->routeIs('data-ps.code-analysis')) active @endif">
-                    PS Analysis By Code
-                </a>
+                    class="dropdown-item @if (request()->routeIs('data-ps.code-analysis')) active @endif">PS Analysis By Code</a>
                 <a href="{{ route('data-ps.mitra-analysis') }}"
-                    class="dropdown-item @if (request()->routeIs('data-ps.mitra-analysis')) active @endif">
-                    PS Analysis by ID Mitra
-                </a>
+                    class="dropdown-item @if (request()->routeIs('data-ps.mitra-analysis')) active @endif">PS Analysis by ID Mitra</a>
                 <a href="{{ route('data-ps.day-analysis') }}"
-                    class="dropdown-item @if (request()->routeIs('data-ps.day-analysis')) active @endif">
-                    PS Data Analysis by Day
-                </a>
+                    class="dropdown-item @if (request()->routeIs('data-ps.day-analysis')) active @endif">PS Data Analysis by Day</a>
+            </div>
+        </div>
+
+        <!-- New Dropdown for Sales Chart and Target Tracking -->
+        <div class="dropdown">
+            <a href="#" class="dropdown-toggle sidebar-item" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">
+                Trend Sales
+            </a>
+            <div class="dropdown-menu">
+                <a href="{{ route('data-ps.target-tracking') }}"
+                    class="dropdown-item @if (request()->routeIs('data-ps.target-tracking')) active @endif">Target Tracking</a>
+                <a href="{{ route('data-ps.sales-chart') }}"
+                    class="dropdown-item @if (request()->routeIs('data-ps.sales-chart')) active @endif">Tracking Chart</a>
             </div>
         </div>
     </div>
@@ -245,59 +266,33 @@
                         </option>
                     </select>
                 </div>
-                <button type="submit" class="btn btn-primary">Filter</button>
+                <button type="submit" class="btn btn-primary">Tampilkan Data</button>
             </form>
 
+
+            <!-- Table to display the analysis data -->
             <div class="table-container">
-                <div class="table-responsive">
-                    @if ($analysisPerCode->isEmpty())
-                        <p>Tidak ada data untuk ditampilkan.</p>
-                    @else
-                        <table class="table table-striped">
-                            <thead>
-                                <tr>
-                                    <th>Bulan</th>
-                                    <th>STO</th>
-                                    <th>Kode Terpilih</th>
-                                    <th>Total</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @php
-                                    $grandTotal = 0; // Inisialisasi total keseluruhan
-                                @endphp
-                                @foreach ($analysisPerCode as $bulan => $data)
-                                    @foreach ($data as $item)
-                                        <tr>
-                                            <td>{{ $bulan }}</td>
-                                            <td>{{ $item->STO }}</td>
-                                            <td>{{ $item->kode_selected }}</td>
-                                            <td>{{ $item->total }}</td>
-                                        </tr>
-                                        @php
-                                            $grandTotal += $item->total; // Menambahkan total per item ke grandTotal
-                                        @endphp
-                                    @endforeach
-                                @endforeach
-                            </tbody>
-                            <tfoot>
-                                <tr>
-                                    <td colspan="3" style="text-align: right; font-weight: bold;">Total Keseluruhan:
-                                    </td>
-                                    <td style="font-weight: bold;">{{ $grandTotal }}</td>
-                                </tr>
-                            </tfoot>
-                        </table>
-                    @endif
-                </div>
-                <a href="{{ route('data-ps.index') }}" class="btn btn-primary">Kembali ke Daftar</a>
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Kode</th>
+                            <th>Nama</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach ($analysisPerCode as $item)
+                            <tr>
+                                <td>{{ $item['kode'] }}</td>
+                                <td>{{ $item['nama'] }}</td>
+                                <td>{{ $item['total'] }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
-
-    <!-- Bootstrap JS -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.1/umd/popper.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </body>
 
 </html>

@@ -4,8 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mitra Pie Chart - Data Management</title>
+    <title>Sales Chart</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.2/css/bootstrap.min.css">
+
     <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
@@ -20,10 +21,31 @@
 
     <style>
         body {
-            background: linear-gradient(135deg, #eef2f3, #8e9eab);
+            background-color: #f8f9fa;
+            font-family: Arial, sans-serif;
             margin: 0;
             padding: 0;
-            color: #333;
+        }
+
+        .container {
+            margin-top: 50px;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .chart-container {
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        canvas {
+            display: block;
+            width: 100% !important;
+            height: auto !important;
         }
 
         /* Sidebar Styling */
@@ -85,27 +107,6 @@
             font-size: 1.2rem;
             font-weight: bold;
             color: white;
-        }
-
-        .main-content {
-            margin-left: 250px;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            /* Pusatkan konten secara horizontal */
-            justify-content: center;
-            /* Pusatkan konten secara vertikal */
-            min-height: 100vh;
-            /* Agar konten menyesuaikan tinggi halaman */
-        }
-
-        canvas {
-            margin-top: 20px;
-            width: 800px !important;
-            height: auto !important;
-            max-width: 100%;
-            max-height: auto;
         }
     </style>
 </head>
@@ -183,102 +184,101 @@
         </div>
     </div>
 
-    <!-- Main Content -->
-    <div class="main-content">
-        <h1>Mitra Pie Chart</h1>
+    <div class="container">
+        <h1>Sales Chart</h1>
 
-        <form method="GET" action="{{ route('data-ps.mitra-pie-chart') }}">
-            <div class="form-group">
-                <label for="bulan_ps">Pilih Bulan:</label>
-                <select name="bulan_ps" id="bulan_ps" class="form-control">
-                    <option value="">Semua Bulan</option>
-                    @foreach (['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'] as $month)
-                        <option value="{{ $month }}" {{ request('bulan_ps') === $month ? 'selected' : '' }}>
-                            {{ $month }}</option>
-                    @endforeach
-                </select>
-            </div>
-
-            <form method="GET" action="{{ route('data-ps.mitra-pie-chart') }}">
-                <div class="form-group">
-                    <label for="sto">Pilih STO:</label> <!-- Change the label to reflect STO selection -->
-                    <select name="sto" id="sto" class="form-control">
-                        <option value="">-- Pilih STO --</option>
-                        @foreach ($stoList as $sto)
-                            <!-- Assuming $stoList contains STOs from the backend -->
-                            <!-- Assuming $stoList contains STOs from the backend -->
-                            <option value="{{ $sto }}" {{ request('sto') == $sto ? 'selected' : '' }}>
-                                {{ $sto }}</option>
+        <!-- Dropdown Filter for Month -->
+        <form method="GET" action="{{ route('data-ps.sales-chart') }}" class="mb-4">
+            <div class="form-row">
+                <div class="col">
+                    <label for="bulan_ps">Select Month:</label>
+                    <select name="bulan_ps" id="bulan_ps" class="form-control">
+                        <option value="">All Months</option>
+                        @foreach (['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'] as $month)
+                            <option value="{{ $month }}"
+                                {{ request('bulan_ps') === $month ? 'selected' : '' }}>
+                                {{ $month }}
+                            </option>
                         @endforeach
                     </select>
                 </div>
-
-                <button type="submit" class="btn btn-primary">Filter</button>
-            </form>
-
-            <div class="chart-container">
-                <canvas id="mitraChart"></canvas>
+                <div class="col">
+                    <label>&nbsp;</label>
+                    <button type="submit" class="btn btn-primary btn-block">Filter</button>
+                </div>
             </div>
+        </form>
 
-            <script>
-                var ctx = document.getElementById('mitraChart').getContext('2d');
-                var mitraLabels = @json($mitraAnalysis->pluck('Mitra')); // Use Mitra as labels
-                var mitraData = @json($mitraAnalysis->pluck('total')); // Use the Mitra data for the pie chart
+        <!-- Chart Container -->
+        <div class="chart-container">
+            <canvas id="salesChart"></canvas>
+        </div>
+    </div>
 
-                var mitraChart = new Chart(ctx, {
-                    type: 'pie',
-                    data: {
-                        labels: mitraLabels,
-                        datasets: [{
-                            label: 'Mitra Data',
-                            data: mitraData,
-                            backgroundColor: [
-                                'rgba(54, 162, 235, 0.7)', // Blue
-                                'rgba(153, 102, 255, 0.7)', // Purple
-                                'rgba(255, 99, 132, 0.7)', // Red
-                                'rgba(75, 192, 192, 0.7)', // Green
-                                'rgba(255, 206, 86, 0.7)', // Yellow
-                                'rgba(255, 159, 64, 0.7)', // Orange
-                            ],
+    <script>
+        var ctx = document.getElementById('salesChart').getContext('2d');
 
-                            borderColor: [
-                                'rgba(54, 162, 235, 1)', // Blue
-                                'rgba(153, 102, 255, 1)', // Purple
-                                'rgba(255, 99, 132, 1)', // Red
-                                'rgba(75, 192, 192, 1)', // Green
-                                'rgba(255, 206, 86, 1)', // Yellow
-                                'rgba(255, 159, 64, 1)', // Orange
-                            ],
-                            borderWidth: 2,
-                            hoverOffset: 10
-                        }]
+        // Labels untuk sumbu x (Hari dalam bulan)
+        var salesLabels = @json($labels);
+
+        // Data penjualan untuk bulan saat ini dan bulan sebelumnya (Kumulatif)
+        var currentMonthCumulative = @json($currentMonthCumulative);
+        var previousMonthCumulative = @json($previousMonthCumulative);
+
+        var salesChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: salesLabels,
+                datasets: [{
+                        label: 'PS {{ date('F', mktime(0, 0, 0, $previousMonth, 10)) }}', // Nama bulan sebelumnya
+                        data: previousMonthCumulative,
+                        borderColor: 'rgba(54, 162, 235, 1)', // Biru
+                        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                        fill: true,
+                        tension: 0.3
                     },
-                    options: {
-                        responsive: true,
-                        plugins: {
-                            legend: {
-                                position: 'top',
-                            },
-                            tooltip: {
-                                callbacks: {
-                                    label: function(tooltipItem) {
-                                        return tooltipItem.label + ': ' + tooltipItem.raw;
-                                    }
-                                }
-                            },
-                            title: {
-                                display: true,
-                                text: 'Mitra Pie Chart',
-                                font: {
-                                    size: 24,
-                                    weight: 'bold'
-                                }
+                    {
+                        label: 'PS {{ date('F', mktime(0, 0, 0, $selectedMonth, 10)) }}', // Nama bulan saat ini
+                        data: currentMonthCumulative,
+                        borderColor: 'rgba(255, 99, 132, 1)', // Merah
+                        backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                        fill: true,
+                        tension: 0.3
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(tooltipItem) {
+                                return tooltipItem.label + ': ' + tooltipItem.raw;
                             }
                         }
                     }
-                });
-            </script>
-    </div>
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Cumulative Sales'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Day of the Month'
+                        }
+                    }
+                }
+            }
+        });
+    </script>
 </body>
 
 </html>

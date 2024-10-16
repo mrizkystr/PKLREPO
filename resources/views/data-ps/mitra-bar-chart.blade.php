@@ -4,19 +4,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mitra Pie Chart - Data Management</title>
+    <title>Mitra Bar Chart - Data Management</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.2/css/bootstrap.min.css">
+
     <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-
     <!-- Popper.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
-
     <!-- Bootstrap JS -->
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
-
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Chart.js Plugin for Data Labels -->
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
 
     <style>
         body {
@@ -185,9 +185,9 @@
 
     <!-- Main Content -->
     <div class="main-content">
-        <h1>Mitra Pie Chart</h1>
+        <h1>Mitra Bar Chart</h1>
 
-        <form method="GET" action="{{ route('data-ps.mitra-pie-chart') }}">
+        <form method="GET" action="{{ route('data-ps.mitra-bar-chart') }}">
             <div class="form-group">
                 <label for="bulan_ps">Pilih Bulan:</label>
                 <select name="bulan_ps" id="bulan_ps" class="form-control">
@@ -199,85 +199,78 @@
                 </select>
             </div>
 
-            <form method="GET" action="{{ route('data-ps.mitra-pie-chart') }}">
-                <div class="form-group">
-                    <label for="sto">Pilih STO:</label> <!-- Change the label to reflect STO selection -->
-                    <select name="sto" id="sto" class="form-control">
-                        <option value="">-- Pilih STO --</option>
-                        @foreach ($stoList as $sto)
-                            <!-- Assuming $stoList contains STOs from the backend -->
-                            <!-- Assuming $stoList contains STOs from the backend -->
-                            <option value="{{ $sto }}" {{ request('sto') == $sto ? 'selected' : '' }}>
-                                {{ $sto }}</option>
-                        @endforeach
-                    </select>
-                </div>
-
-                <button type="submit" class="btn btn-primary">Filter</button>
-            </form>
-
-            <div class="chart-container">
-                <canvas id="mitraChart"></canvas>
+            <div class="form-group">
+                <label for="sto">Pilih STO:</label>
+                <select name="sto" id="sto" class="form-control">
+                    <option value="">-- Pilih STO --</option>
+                    @foreach ($stoList as $sto)
+                        <option value="{{ $sto }}" {{ request('sto') == $sto ? 'selected' : '' }}>
+                            {{ $sto }}</option>
+                    @endforeach
+                </select>
             </div>
 
-            <script>
-                var ctx = document.getElementById('mitraChart').getContext('2d');
-                var mitraLabels = @json($mitraAnalysis->pluck('Mitra')); // Use Mitra as labels
-                var mitraData = @json($mitraAnalysis->pluck('total')); // Use the Mitra data for the pie chart
+            <button type="submit" class="btn btn-primary">Filter</button>
+        </form>
 
-                var mitraChart = new Chart(ctx, {
-                    type: 'pie',
-                    data: {
-                        labels: mitraLabels,
-                        datasets: [{
-                            label: 'Mitra Data',
-                            data: mitraData,
-                            backgroundColor: [
-                                'rgba(54, 162, 235, 0.7)', // Blue
-                                'rgba(153, 102, 255, 0.7)', // Purple
-                                'rgba(255, 99, 132, 0.7)', // Red
-                                'rgba(75, 192, 192, 0.7)', // Green
-                                'rgba(255, 206, 86, 0.7)', // Yellow
-                                'rgba(255, 159, 64, 0.7)', // Orange
-                            ],
+        <div class="chart-container">
+            <canvas id="mitraBarChart"></canvas>
+        </div>
 
-                            borderColor: [
-                                'rgba(54, 162, 235, 1)', // Blue
-                                'rgba(153, 102, 255, 1)', // Purple
-                                'rgba(255, 99, 132, 1)', // Red
-                                'rgba(75, 192, 192, 1)', // Green
-                                'rgba(255, 206, 86, 1)', // Yellow
-                                'rgba(255, 159, 64, 1)', // Orange
-                            ],
-                            borderWidth: 2,
-                            hoverOffset: 10
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        plugins: {
-                            legend: {
-                                position: 'top',
-                            },
-                            tooltip: {
-                                callbacks: {
-                                    label: function(tooltipItem) {
-                                        return tooltipItem.label + ': ' + tooltipItem.raw;
-                                    }
-                                }
-                            },
-                            title: {
-                                display: true,
-                                text: 'Mitra Pie Chart',
-                                font: {
-                                    size: 24,
-                                    weight: 'bold'
-                                }
+        <script>
+            var ctx = document.getElementById('mitraBarChart').getContext('2d');
+            var mitraLabels = @json($labels); // Labels untuk Bar Chart (nama Mitra)
+            var mitraData = @json($totals); // Data untuk Bar Chart (total item per Mitra)
+
+            var mitraBarChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: mitraLabels,
+                    datasets: [{
+                        label: 'Jumlah Data per Mitra',
+                        data: mitraData,
+                        backgroundColor: ['rgba(255, 99, 132, 0.7)', 'rgba(54, 162, 235, 0.7)',
+                            'rgba(75, 192, 192, 0.7)', 'rgba(153, 102, 255, 0.7)', 'rgba(255, 159, 64, 0.7)'
+                        ],
+                        borderColor: ['rgba(255, 99, 132, 1)', 'rgba(54, 162, 235, 1)', 'rgba(75, 192, 192, 1)',
+                            'rgba(153, 102, 255, 1)', 'rgba(255, 159, 64, 1)'
+                        ],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        title: {
+                            display: true,
+                            text: 'Mitra Bar Chart',
+                            font: {
+                                size: 24,
+                                weight: 'bold'
+                            }
+                        },
+                        datalabels: {
+                            anchor: 'end',
+                            align: 'end',
+                            color: '#000',
+                            font: {
+                                size: 14,
+                                weight: 'bold'
                             }
                         }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
                     }
-                });
-            </script>
+                },
+                plugins: [ChartDataLabels]
+            });
+        </script>
     </div>
 </body>
 

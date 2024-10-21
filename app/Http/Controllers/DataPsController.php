@@ -29,8 +29,14 @@ class DataPsController extends Controller
 
     public function analysisBySto(Request $request)
     {
-        // Mengambil data per STO dengan total data PS per bulan (Januari sampai Desember)
-        $stoAnalysis = DataPsAgustusKujangSql::select(
+        $selectedSto = $request->input('sto', 'all');
+        $viewType = $request->input('view_type', 'table');
+
+        // Ambil daftar STO unik
+        $stoList = DataPsAgustusKujangSql::select('STO')->distinct()->orderBy('STO', 'asc')->get();
+
+        // Query data PS berdasarkan STO dan bulan
+        $query = DataPsAgustusKujangSql::select(
             'STO',
             DB::raw('sum(case when Bulan_PS = "Januari" then 1 else 0 end) as total_januari'),
             DB::raw('sum(case when Bulan_PS = "Februari" then 1 else 0 end) as total_februari'),
@@ -45,12 +51,16 @@ class DataPsController extends Controller
             DB::raw('sum(case when Bulan_PS = "November" then 1 else 0 end) as total_november'),
             DB::raw('sum(case when Bulan_PS = "Desember" then 1 else 0 end) as total_desember'),
             DB::raw('sum(1) as grand_total')
-        ) // Grand total untuk semua bulan
-            ->groupBy('STO')
-            ->orderBy('STO', 'asc')
-            ->get();
+        )
+            ->groupBy('STO');
 
-        return view('data-ps.sto-analysis', compact('stoAnalysis'));
+        if ($selectedSto != 'all') {
+            $query->where('STO', $selectedSto);
+        }
+
+        $stoAnalysis = $query->get();
+
+        return view('data-ps.sto-analysis', compact('stoAnalysis', 'stoList', 'selectedSto', 'viewType'));
     }
 
     public function analysisByMonth(Request $request)
@@ -160,8 +170,8 @@ class DataPsController extends Controller
             return $query->where('STO', $selectedSto);
         })->distinct()->pluck('Mitra');
 
-        // Ambil daftar STO untuk ditampilkan di dropdown
-        $stoList = DataPsAgustusKujangSql::distinct()->pluck('STO');
+        // Ambil daftar STO, urutkan secara alfabetis, dan tampilkan di dropdown
+        $stoList = DataPsAgustusKujangSql::distinct()->pluck('STO')->sort();
 
         // Query untuk analisis berdasarkan bulan, STO, dan mitra
         $mitraAnalysis = DataPsAgustusKujangSql::select(
@@ -215,7 +225,7 @@ class DataPsController extends Controller
             'data' => $stoData,
             'bulan_ps' => $bulanPs,
             'id_mitra' => $selectedMitra,
-            'mitraList' => DataPsAgustusKujangSql::distinct()->pluck('Mitra'), // List for filtering
+            'mitraList' => DataPsAgustusKujangSql::distinct()->pluck('Mitra')->sort(), // List for filtering, sorted alphabetically
         ]);
     }
 
@@ -246,7 +256,7 @@ class DataPsController extends Controller
             'data' => $stoData,
             'bulan_ps' => $bulanPs,
             'id_mitra' => $selectedMitra,
-            'mitraList' => DataPsAgustusKujangSql::distinct()->pluck('Mitra'), // List for filtering
+            'mitraList' => DataPsAgustusKujangSql::distinct()->pluck('Mitra')->sort(), // List for filtering, sorted alphabetically
         ]);
     }
 
@@ -255,8 +265,8 @@ class DataPsController extends Controller
         $selectedSto = $request->input('sto'); // Mengambil STO yang dipilih
         $bulanPs = $request->input('bulan_ps'); // Opsional, jika ingin memfilter berdasarkan bulan juga
 
-        // Mengambil daftar STO unik untuk dropdown form
-        $stoList = DataPsAgustusKujangSql::distinct()->pluck('STO');
+        // Mengambil daftar STO unik untuk dropdown form dan mengurutkan secara alfabetis
+        $stoList = DataPsAgustusKujangSql::distinct()->pluck('STO')->sort();
 
         // Mengambil data Mitra berdasarkan STO yang dipilih
         $mitraAnalysis = DataPsAgustusKujangSql::select(
@@ -285,8 +295,8 @@ class DataPsController extends Controller
         $selectedSto = $request->input('sto'); // Get the selected STO
         $bulanPs = $request->input('bulan_ps'); // Optional if you want to filter by month too
 
-        // Fetch list of STOs to populate the form dropdown
-        $stoList = DataPsAgustusKujangSql::distinct()->pluck('STO');
+        // Fetch list of STOs to populate the form dropdown and sort them alphabetically
+        $stoList = DataPsAgustusKujangSql::distinct()->pluck('STO')->sort();
 
         // Fetch Mitra data based on the selected STO
         $mitraAnalysis = DataPsAgustusKujangSql::select(
@@ -308,161 +318,176 @@ class DataPsController extends Controller
 
     public function dayAnalysis(Request $request)
     {
-        // Get available months for the dropdown
+        // Buat array semua bulan dari Januari hingga Desember
+        $monthsList = [];
+        for ($month = 1; $month <= 12; $month++) {
+            $monthsList[] = Carbon::create(null, $month)->format('F Y'); // Nama bulan lengkap dengan tahun
+        }
+
+        // Ambil bulan yang ada data di database
         $allDates = DataPsAgustusKujangSql::selectRaw('DATE_FORMAT(TGL_PS, "%Y-%m") as month')
             ->distinct()
             ->pluck('month');
 
-        $availableMonths = $allDates->toArray();
+        // Ubah format tanggal bulan dari database menjadi format 'F Y'
+        $availableMonths = $allDates->map(function ($date) {
+            return Carbon::parse($date)->format('F Y');
+        })->toArray();
 
-        // Get filter inputs
-        $tanggal_ps = $request->input('tanggal_ps');
+        // Gabungkan semua bulan dari Januari hingga Desember
+        $availableMonths = array_unique(array_merge($monthsList, $availableMonths));
+
+        // Input dari form
         $bulan_ps = $request->input('bulan_ps');
 
         // Base query
         $query = DataPsAgustusKujangSql::query();
 
-        // Filter by date
-        if ($tanggal_ps) {
-            $query->whereDate('TGL_PS', $tanggal_ps);
-        }
-
-        // Filter by month
+        // Filter berdasarkan bulan jika dipilih
         if ($bulan_ps) {
-            $query->whereYear('TGL_PS', Carbon::parse($bulan_ps)->year)
-                ->whereMonth('TGL_PS', Carbon::parse($bulan_ps)->month);
+            $carbonMonth = Carbon::parse($bulan_ps);
+            $query->whereYear('TGL_PS', $carbonMonth->year)
+                ->whereMonth('TGL_PS', $carbonMonth->month);
         }
 
-        // Select data for analysis by day, only displaying TGL_PS first
-        $dayAnalysis = $query->selectRaw('DATE(TGL_PS) as tanggal')
+        // Select data untuk analisis per hari
+        $dayAnalysis = $query->selectRaw('DATE(TGL_PS) as tanggal, COUNT(*) as totalPS')
             ->groupBy('tanggal')
             ->orderBy('tanggal', 'asc')
             ->get();
 
-        // Jika request berasal dari Ajax untuk menampilkan detail
+        // Handle request AJAX untuk detail data
         if ($request->ajax()) {
             $tglDetail = $request->input('tanggal');
             $detailData = DataPsAgustusKujangSql::whereDate('TGL_PS', $tglDetail)
-                ->select('ORDER_ID', 'CUSTOMER_NAME', 'STO', 'Nama_SA', 'ADDON')
+                ->select('ORDER_ID', 'STO', 'CUSTOMER_NAME', 'ADDON', 'Kode_sales', 'Nama_SA')
                 ->get();
 
-            return response()->json($detailData); // Kembalikan data sebagai JSON
+            return response()->json([
+                'details' => $detailData,
+            ]);
         }
 
-        return view('data-ps.day-analysis', compact('dayAnalysis', 'tanggal_ps', 'bulan_ps', 'availableMonths'));
+        return view('data-ps.day-analysis', compact('dayAnalysis', 'bulan_ps', 'availableMonths'));
     }
 
-    public function targetTracking(Request $request)
+    public function targetTrackingAndSalesChart(Request $request)
     {
-        // Get selected month or use current month as default
+        // Get selected month or use the current month as default
         $selectedMonth = $request->input('bulan', now()->month);
+        $selectedYear = now()->year;
 
-        // Fetch data for the current month (left table)
-        $currentMonthData = DataPsAgustusKujangSql::select(
-            DB::raw('DATE(TGL_PS) as tgl'),
-            DB::raw('COUNT(*) as ps_harian')
-        )
-            ->whereMonth('TGL_PS', $selectedMonth)
-            ->groupBy(DB::raw('DATE(TGL_PS)'))
-            ->orderBy('tgl') // Ensure sorting by date
-            ->get();
-
-        // Calculate Previous Month
+        // Calculate the previous month and year
         $previousMonth = $selectedMonth == 1 ? 12 : $selectedMonth - 1;
+        $previousMonthYear = $selectedMonth == 1 ? $selectedYear - 1 : $selectedYear;
 
-        // Fetch data for the previous month (right table)
-        $previousMonthData = DataPsAgustusKujangSql::select(
-            DB::raw('DATE(TGL_PS) as tgl'),
-            DB::raw('COUNT(*) as ps_harian')
-        )
-            ->whereMonth('TGL_PS', $previousMonth)
-            ->groupBy(DB::raw('DATE(TGL_PS)'))
-            ->orderBy('tgl') // Ensure sorting by date
-            ->get();
+        // Get the view type (default to 'table' if not set)
+        $viewType = $request->input('view_type', 'table');
 
-        // Create an associative array for the previous month data for easier access
-        $previousMonthArray = [];
-        foreach ($previousMonthData as $data) {
-            $previousMonthArray[$data->tgl] = $data->ps_harian;
-        }
-
-        // Prepare data for calculating GAP MTD
-        $gapMTD = [];
-        foreach ($currentMonthData as $currentData) {
-            $currentDate = $currentData->tgl;
-            $previousDataValue = $previousMonthArray[$currentDate] ?? 0; // Default to 0 if no previous data
-            $gapMTD[$currentDate] = $currentData->ps_harian - $previousDataValue; // Calculate GAP MTD
-        }
-
-        // Calculate total realizations for the previous month
-        $realisasiBulanLalu = $previousMonthData->sum('ps_harian');
-
-        return view('data-ps.target-tracking', compact('currentMonthData', 'previousMonthData', 'gapMTD', 'selectedMonth', 'realisasiBulanLalu'));
-    }
-
-    // New function to handle the chart diagram
-    public function salesChart(Request $request)
-    {
-        // Dapatkan bulan yang dipilih atau gunakan bulan saat ini sebagai default
-        $selectedMonth = $request->input('bulan_ps') ? date('n', strtotime($request->input('bulan_ps'))) : now()->month;
-
-        // Ambil data untuk bulan yang dipilih (misalnya Agustus)
+        // Fetch data for current month
         $currentMonthData = DataPsAgustusKujangSql::select(
+            DB::raw('DATE(TGL_PS) as tgl'),
             DB::raw('DAY(TGL_PS) as day'),
             DB::raw('COUNT(*) as ps_harian')
         )
             ->whereMonth('TGL_PS', $selectedMonth)
-            ->groupBy(DB::raw('DAY(TGL_PS)'))
-            ->orderBy('day')
+            ->whereYear('TGL_PS', $selectedYear)
+            ->groupBy(DB::raw('DATE(TGL_PS), DAY(TGL_PS)'))
+            ->orderBy('tgl')
             ->get();
 
-        // Hitung bulan sebelumnya
-        $previousMonth = $selectedMonth == 1 ? 12 : $selectedMonth - 1;
-
-        // Ambil data untuk bulan sebelumnya (misalnya Juli)
+        // Fetch data for previous month
         $previousMonthData = DataPsAgustusKujangSql::select(
+            DB::raw('DATE(TGL_PS) as tgl'),
             DB::raw('DAY(TGL_PS) as day'),
             DB::raw('COUNT(*) as ps_harian')
         )
             ->whereMonth('TGL_PS', $previousMonth)
-            ->groupBy(DB::raw('DAY(TGL_PS)'))
-            ->orderBy('day')
+            ->whereYear('TGL_PS', $previousMonthYear)
+            ->groupBy(DB::raw('DATE(TGL_PS), DAY(TGL_PS)'))
+            ->orderBy('tgl')
             ->get();
 
-        // Siapkan data kumulatif untuk bulan saat ini
-        $currentMonthCumulative = [];
-        $currentSum = 0;
+        // Initialize arrays for storing processed data
+        $dataToDisplayCurrentMonth = [];
+        $dataToDisplayPreviousMonth = [];
+        $gapMTDData = [];
 
-        foreach ($currentMonthData as $data) {
-            $currentSum += $data->ps_harian;
-            $currentMonthCumulative[] = $currentSum;
+        // Initialize cumulative totals
+        $currentMonthCumulative = 0;
+        $previousMonthCumulative = 0;
+
+        // Process data for all days in the month
+        foreach (range(1, 31) as $day) {
+            // Set the correct date for the current month
+            $currentMonthDate = \Carbon\Carbon::createFromDate($selectedYear, $selectedMonth, $day);
+            $previousMonthDate = \Carbon\Carbon::createFromDate($previousMonthYear, $previousMonth, $day);
+
+            // Get current month data for this day
+            $currentDayData = $currentMonthData->firstWhere('day', $day);
+            $currentDayPS = $currentDayData ? $currentDayData->ps_harian : 0;
+
+            // Get previous month data for this day
+            $previousDayData = $previousMonthData->firstWhere('day', $day);
+            $previousDayPS = $previousDayData ? $previousDayData->ps_harian : 0;
+
+            // Update cumulative totals
+            $currentMonthCumulative += $currentDayPS;
+            $previousMonthCumulative += $previousDayPS;
+
+            // Calculate GAP MTD
+            $gapMTD = $currentMonthCumulative - $previousMonthCumulative;
+
+            // Store current month data
+            $dataToDisplayCurrentMonth[] = [
+                'tgl' => $currentDayData ? $currentDayData->tgl : $currentMonthDate->format('Y-m-d'),
+                'ps_harian' => $currentDayPS,
+                'realisasi_mtd' => $currentMonthCumulative,
+                'gimmick' => $this->calculateGimmick($currentDayPS, $currentMonthDate->format('l'))
+            ];
+
+            // Store previous month data
+            $dataToDisplayPreviousMonth[] = [
+                'tgl' => $previousDayData ? $previousDayData->tgl : $previousMonthDate->format('Y-m-d'),
+                'realisasi_bulan_lalu' => $previousDayPS,
+                'realisasi_mtd_bulan_lalu' => $previousMonthCumulative,
+                'gap_mtd' => $gapMTD
+            ];
+
+            // Store GAP MTD data for charting
+            $gapMTDData[] = [
+                'day' => $day,
+                'gap_mtd' => $gapMTD,
+                'status' => $gapMTD > 0 ? 'positive' : ($gapMTD < 0 ? 'negative' : 'neutral')
+            ];
         }
 
-        // Siapkan data kumulatif untuk bulan sebelumnya
-        $previousMonthCumulative = [];
-        $previousSum = 0;
+        // Prepare labels for charts
+        $labels = range(1, 31);
 
-        foreach ($previousMonthData as $data) {
-            $previousSum += $data->ps_harian;
-            $previousMonthCumulative[] = $previousSum;
-        }
-
-        // Pastikan bahwa jika tidak ada data untuk bulan sebelumnya, tetap tambahkan array dengan nol
-        if ($previousMonthCumulative == []) {
-            $previousMonthCumulative = array_fill(0, count($currentMonthCumulative), 0);
-        }
-
-        // Siapkan label untuk grafik (hari dalam bulan)
-        $labels = range(1, 31); // Asumsi maksimum 31 hari
-
-        // Kembalikan tampilan dengan data grafik
-        return view('data-ps.sales-chart', [
-            'currentMonthCumulative' => $currentMonthCumulative,
-            'previousMonthCumulative' => $previousMonthCumulative,
+        // Return view with all necessary data
+        return view('data-ps.target-tracking-and-sales-chart', [
+            'dataToDisplayCurrentMonth' => $dataToDisplayCurrentMonth,
+            'dataToDisplayPreviousMonth' => $dataToDisplayPreviousMonth,
+            'gapMTDData' => $gapMTDData,
             'labels' => $labels,
             'selectedMonth' => $selectedMonth,
             'previousMonth' => $previousMonth,
+            'viewType' => $viewType,
         ]);
+    }
+
+    // Private helper function to calculate gimmick based on the day of the week
+    private function calculateGimmick($ps_harian, $dayOfWeek)
+    {
+        $threshold = match ($dayOfWeek) {
+            'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday' => 7,
+            'Saturday' => 6,
+            'Sunday' => 5,
+            default => 7,
+        };
+
+        return $ps_harian >= $threshold ? 'achieve' : 'not achieve';
     }
 
     public function create()

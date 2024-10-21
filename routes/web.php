@@ -75,8 +75,10 @@ Route::prefix('data-ps')->group(function () {
     Route::get('/data-ps/day-analysis', [DataPsController::class, 'dayAnalysis'])->name('data-ps.day-analysis');
 
     // Route untuk analisis target
-    Route::get('/data-ps/target-tracking', [DataPsController::class, 'targetTracking'])->name('data-ps.target-tracking');
-    Route::get('/data-ps/sales-chart', [DataPsController::class, 'salesChart'])->name('data-ps.sales-chart');
+    // Route::get('/data-ps/target-tracking', [DataPsController::class, 'targetTracking'])->name('data-ps.target-tracking');
+    // Route::get('/data-ps/sales-chart', [DataPsController::class, 'salesChart'])->name('data-ps.sales-chart');
+
+    Route::get('data-ps/target-tracking-and-sales-chart', [DataPsController::class, 'targetTrackingAndSalesChart'])->name('data-ps.target-tracking-and-sales-chart');
 
     // Route untuk import Excel
     Route::post('/import-excel', [DataPsController::class, 'importExcel'])->name('data-ps.import');

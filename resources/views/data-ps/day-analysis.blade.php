@@ -188,24 +188,28 @@
             </div>
         </div>
 
-        <!-- New Dropdown for Sales Chart and Target Tracking -->
-        <div class="dropdown">
-            <a href="#" class="dropdown-toggle sidebar-item" data-toggle="dropdown" aria-haspopup="true"
-                aria-expanded="false">
-                Trend Sales
-            </a>
-            <div class="dropdown-menu">
-                <a href="{{ route('data-ps.target-tracking') }}"
-                    class="dropdown-item @if (request()->routeIs('data-ps.target-tracking')) active @endif">Target Tracking</a>
-                <a href="{{ route('data-ps.sales-chart') }}"
-                    class="dropdown-item @if (request()->routeIs('data-ps.sales-chart')) active @endif">Tracking Chart</a>
-            </div>
-        </div>
+        <a href="{{ route('data-ps.target-tracking-and-sales-chart') }}"
+            class="sidebar-item @if (request()->routeIs('data-ps.target-tracking-and-sales-chart')) active @endif">Trend Sales</a>
     </div>
-    
+
     <!-- Main Content -->
     <div class="main-content">
-        <h1>Data Analysis PS per Hari</h1>
+        <h1>Data Analysis PS by Day</h1>
+
+        <!-- Month Filter Dropdown -->
+        <form method="GET" action="{{ route('data-ps.day-analysis') }}" id="monthFilterForm">
+            <div class="form-group">
+                <label for="bulan_ps">Filter by Month</label>
+                <select name="bulan_ps" id="bulan_ps" class="form-control"
+                    onchange="document.getElementById('monthFilterForm').submit();">
+                    <option value="">Select Month</option>
+                    @foreach ($availableMonths as $month)
+                        <option value="{{ $month }}" @if ($bulan_ps == $month) selected @endif>
+                            {{ $month }}</option>
+                    @endforeach
+                </select>
+            </div>
+        </form>
 
         <!-- Display Analysis Table -->
         <div class="table-responsive">
@@ -213,8 +217,8 @@
                 <thead>
                     <tr>
                         <th>Tanggal PS</th>
-                        <!-- Detail column -->
                         <th>Detail</th>
+                        <th>Total PS</th> <!-- Total PS dipindahkan ke sebelah kanan Detail -->
                     </tr>
                 </thead>
                 <tbody>
@@ -226,10 +230,10 @@
                                     Show Details
                                 </button>
                             </td>
+                            <td>{{ $analysis->totalPS }}</td> <!-- Total PS ditampilkan di kolom kanan -->
                         </tr>
-                        <!-- Tempat detail akan dimasukkan setelah AJAX -->
                         <tr id="details-{{ $analysis->tanggal }}" style="display: none;">
-                            <td colspan="2">
+                            <td colspan="3">
                                 <div class="details-container"></div>
                             </td>
                         </tr>
@@ -239,44 +243,41 @@
         </div>
     </div>
 
+    <!-- Script for handling show-details and AJAX request remains unchanged -->
     <script>
         $(document).ready(function() {
-            // Ketika tombol Show Details diklik
             $('.show-details').on('click', function() {
                 const tanggal = $(this).data('tanggal');
                 const detailsRow = $('#details-' + tanggal);
                 const container = detailsRow.find('.details-container');
 
-                // Periksa apakah detail sudah ditampilkan
                 if (detailsRow.is(':visible')) {
                     detailsRow.hide();
                     container.empty();
                 } else {
-                    // Panggil AJAX untuk mendapatkan data detail berdasarkan tanggal
                     $.ajax({
                         url: "{{ route('data-ps.day-analysis') }}",
                         type: 'GET',
                         data: {
                             tanggal: tanggal
                         },
-                        success: function(data) {
+                        success: function(response) {
                             let detailHtml = '<table class="table table-sm"><thead><tr>' +
-                                '<th>ORDER ID</th><th>CUSTOMER NAME</th><th>STO</th><th>Nama SA</th><th>ADDON</th>' +
+                                '<th>ORDER ID</th><th>STO</th><th>CUSTOMER NAME</th><th>ADDON</th><th>Kode Sales</th><th>Nama SA</th>' +
                                 '</tr></thead><tbody>';
 
-                            data.forEach(function(item) {
+                            response.details.forEach(function(item) {
                                 detailHtml += '<tr>' +
                                     '<td>' + item.ORDER_ID + '</td>' +
-                                    '<td>' + item.CUSTOMER_NAME + '</td>' +
                                     '<td>' + item.STO + '</td>' +
-                                    '<td>' + item.Nama_SA + '</td>' +
+                                    '<td>' + item.CUSTOMER_NAME + '</td>' +
                                     '<td>' + item.ADDON + '</td>' +
+                                    '<td>' + item.Kode_sales + '</td>' +
+                                    '<td>' + item.Nama_SA + '</td>' +
                                     '</tr>';
                             });
 
                             detailHtml += '</tbody></table>';
-
-                            // Masukkan detail ke dalam kontainer dan tampilkan baris detail
                             container.html(detailHtml);
                             detailsRow.show();
                         },

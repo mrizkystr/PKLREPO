@@ -218,19 +218,8 @@
             </div>
         </div>
 
-        <!-- New Dropdown for Sales Chart and Target Tracking -->
-        <div class="dropdown">
-            <a href="#" class="dropdown-toggle sidebar-item" data-toggle="dropdown" aria-haspopup="true"
-                aria-expanded="false">
-                Trend Sales
-            </a>
-            <div class="dropdown-menu">
-                <a href="{{ route('data-ps.target-tracking') }}"
-                    class="dropdown-item @if (request()->routeIs('data-ps.target-tracking')) active @endif">Target Tracking</a>
-                <a href="{{ route('data-ps.sales-chart') }}"
-                    class="dropdown-item @if (request()->routeIs('data-ps.sales-chart')) active @endif">Tracking Chart</a>
-            </div>
-        </div>
+        <a href="{{ route('data-ps.target-tracking-and-sales-chart') }}"
+            class="sidebar-item @if (request()->routeIs('data-ps.target-tracking-and-sales-chart')) active @endif">Trend Sales</a>
     </div>
 
     <div class="main-content">
@@ -247,25 +236,26 @@
                         @endforeach
                     </select>
                 </div>
-                <div class="form-group">
-                    <label for="bulan_ps">Pilih Bulan:</label>
-                    <select name="bulan_ps" id="bulan_ps" class="form-control">
-                        <option value="">Semua Bulan</option>
-                        <option value="Januari" {{ $bulanPs === 'Januari' ? 'selected' : '' }}>Januari</option>
-                        <option value="Februari" {{ $bulanPs === 'Februari' ? 'selected' : '' }}>Februari</option>
-                        <option value="Maret" {{ $bulanPs === 'Maret' ? 'selected' : '' }}>Maret</option>
-                        <option value="April" {{ $bulanPs === 'April' ? 'selected' : '' }}>April</option>
-                        <option value="Mei" {{ $bulanPs === 'Mei' ? 'selected' : '' }}>Mei</option>
-                        <option value="Juni" {{ $bulanPs === 'Juni' ? 'selected' : '' }}>Juni</option>
-                        <option value="Juli" {{ $bulanPs === 'Juli' ? 'selected' : '' }}>Juli</option>
-                        <option value="Agustus" {{ $bulanPs === 'Agustus' ? 'selected' : '' }}>Agustus</option>
-                        <option value="September" {{ $bulanPs === 'September' ? 'selected' : '' }}>September</option>
-                        <option value="Oktober" {{ $bulanPs === 'Oktober' ? 'selected' : '' }}>Oktober</option>
-                        <option value="November" {{ $bulanPs === 'November' ? 'selected' : '' }}>November</option>
-                        <option value="Desember" {{ $bulanPs === 'Desember' ? 'selected' : '' }}>Desember</option>
-                    </select>
-                </div>
-                <button type="submit" class="btn btn-primary">Filter</button>
+            </form>
+            <div class="form-group">
+                <label for="bulan_ps">Pilih Bulan:</label>
+                <select name="bulan_ps" id="bulan_ps" class="form-control">
+                    <option value="">Semua Bulan</option>
+                    <option value="Januari" {{ $bulanPs === 'Januari' ? 'selected' : '' }}>Januari</option>
+                    <option value="Februari" {{ $bulanPs === 'Februari' ? 'selected' : '' }}>Februari</option>
+                    <option value="Maret" {{ $bulanPs === 'Maret' ? 'selected' : '' }}>Maret</option>
+                    <option value="April" {{ $bulanPs === 'April' ? 'selected' : '' }}>April</option>
+                    <option value="Mei" {{ $bulanPs === 'Mei' ? 'selected' : '' }}>Mei</option>
+                    <option value="Juni" {{ $bulanPs === 'Juni' ? 'selected' : '' }}>Juni</option>
+                    <option value="Juli" {{ $bulanPs === 'Juli' ? 'selected' : '' }}>Juli</option>
+                    <option value="Agustus" {{ $bulanPs === 'Agustus' ? 'selected' : '' }}>Agustus</option>
+                    <option value="September" {{ $bulanPs === 'September' ? 'selected' : '' }}>September</option>
+                    <option value="Oktober" {{ $bulanPs === 'Oktober' ? 'selected' : '' }}>Oktober</option>
+                    <option value="November" {{ $bulanPs === 'November' ? 'selected' : '' }}>November</option>
+                    <option value="Desember" {{ $bulanPs === 'Desember' ? 'selected' : '' }}>Desember</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary">Filter</button>
             </form>
 
             <div class="table-container">

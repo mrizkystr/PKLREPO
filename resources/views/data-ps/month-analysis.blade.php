@@ -171,8 +171,8 @@
 </head>
 
 <body>
-     <!-- Sidebar -->
-     <div class="sidebar">
+    <!-- Sidebar -->
+    <div class="sidebar">
         <div class="sidebar-brand">Data Management</div>
         <a href="/dashboard" class="sidebar-item">Dashboard</a>
         <a href="{{ route('data-ps.index') }}" class="sidebar-item @if (request()->routeIs('data-ps.index')) active @endif">Data
@@ -228,24 +228,13 @@
             </div>
         </div>
 
-        <!-- New Dropdown for Sales Chart and Target Tracking -->
-        <div class="dropdown">
-            <a href="#" class="dropdown-toggle sidebar-item" data-toggle="dropdown" aria-haspopup="true"
-                aria-expanded="false">
-                Trend Sales
-            </a>
-            <div class="dropdown-menu">
-                <a href="{{ route('data-ps.target-tracking') }}"
-                    class="dropdown-item @if (request()->routeIs('data-ps.target-tracking')) active @endif">Target Tracking</a>
-                <a href="{{ route('data-ps.sales-chart') }}"
-                    class="dropdown-item @if (request()->routeIs('data-ps.sales-chart')) active @endif">Tracking Chart</a>
-            </div>
-        </div>
+        <a href="{{ route('data-ps.target-tracking-and-sales-chart') }}"
+            class="sidebar-item @if (request()->routeIs('data-ps.target-tracking-and-sales-chart')) active @endif">Trend Sales</a>
     </div>
 
     <div class="main-content">
         <div class="container">
-            <h1>Data Analysis PS per Bulan</h1>
+            <h1>Data Analysis PS by Month</h1>
             <form action="{{ route('data-ps.month-analysis') }}" method="GET">
                 <div class="form-group">
                     <label for="bulan_ps">Pilih Bulan:</label>

@@ -18,6 +18,9 @@
     <!-- Bootstrap JS -->
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
 
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
     <style>
         body {
             background: linear-gradient(135deg, #f3f4f6, #a2c2e9);
@@ -208,68 +211,127 @@
             </div>
         </div>
 
-        <!-- New Dropdown for Sales Chart and Target Tracking -->
-        <div class="dropdown">
-            <a href="#" class="dropdown-toggle sidebar-item" data-toggle="dropdown" aria-haspopup="true"
-                aria-expanded="false">
-                Trend Sales
-            </a>
-            <div class="dropdown-menu">
-                <a href="{{ route('data-ps.target-tracking') }}"
-                    class="dropdown-item @if (request()->routeIs('data-ps.target-tracking')) active @endif">Target Tracking</a>
-                <a href="{{ route('data-ps.sales-chart') }}"
-                    class="dropdown-item @if (request()->routeIs('data-ps.sales-chart')) active @endif">Tracking Chart</a>
-            </div>
-        </div>
+        <a href="{{ route('data-ps.target-tracking-and-sales-chart') }}"
+            class="sidebar-item @if (request()->routeIs('data-ps.target-tracking-and-sales-chart')) active @endif">Trend Sales</a>
     </div>
 
 
     <div class="main-content">
         <h1>Data Analysis PS by STO</h1>
 
-        <div class="table-container">
-            <table class="table table-striped">
-                <thead>
-                    <tr>
-                        <th>STO</th>
-                        <th>Januari</th>
-                        <th>Februari</th>
-                        <th>Maret</th>
-                        <th>April</th>
-                        <th>Mei</th>
-                        <th>Juni</th>
-                        <th>Juli</th>
-                        <th>Agustus</th>
-                        <th>September</th>
-                        <th>Oktober</th>
-                        <th>November</th>
-                        <th>Desember</th>
-                        <th>Grand Total</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach ($stoAnalysis as $analysis)
-                        <tr>
-                            <td>{{ $analysis->STO }}</td>
-                            <td>{{ $analysis->total_januari }}</td>
-                            <td>{{ $analysis->total_februari }}</td>
-                            <td>{{ $analysis->total_maret }}</td>
-                            <td>{{ $analysis->total_april }}</td>
-                            <td>{{ $analysis->total_mei }}</td>
-                            <td>{{ $analysis->total_juni }}</td>
-                            <td>{{ $analysis->total_juli }}</td>
-                            <td>{{ $analysis->total_agustus }}</td>
-                            <td>{{ $analysis->total_september }}</td>
-                            <td>{{ $analysis->total_oktober }}</td>
-                            <td>{{ $analysis->total_november }}</td>
-                            <td>{{ $analysis->total_desember }}</td>
-                            <td>{{ $analysis->grand_total }}</td>
-                        </tr>
+        <!-- Filter Form -->
+        <!-- Filter Form -->
+        <form method="GET" action="{{ route('data-ps.sto-analysis') }}" class="mb-4">
+
+            <div class="form-group">
+                <label for="view_type">View Type:</label>
+                <select name="view_type" id="view_type" class="form-control">
+                    <option value="table" {{ $viewType == 'table' ? 'selected' : '' }}>Table</option>
+                    <option value="chart" {{ $viewType == 'chart' ? 'selected' : '' }}>Chart</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="sto">Select STO:</label>
+                <select name="sto" id="sto" class="form-control">
+                    <option value="all" {{ $selectedSto == 'all' ? 'selected' : '' }}>All STO</option>
+                    @foreach ($stoList as $sto)
+                        <option value="{{ $sto->STO }}" {{ $selectedSto == $sto->STO ? 'selected' : '' }}>
+                            {{ $sto->STO }}
+                        </option>
                     @endforeach
-                </tbody>
-            </table>
-            <a href="{{ route('data-ps.index') }}" class="btn btn-primary">Back to List</a>
-        </div>
+                </select>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Apply Filters</button>
+        </form>
+
+        <!-- Conditional Rendering for Table or Chart -->
+        @if ($viewType == 'table')
+            <div class="table-container">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>STO</th>
+                            <th>Januari</th>
+                            <th>Februari</th>
+                            <th>Maret</th>
+                            <th>April</th>
+                            <th>Mei</th>
+                            <th>Juni</th>
+                            <th>Juli</th>
+                            <th>Agustus</th>
+                            <th>September</th>
+                            <th>Oktober</th>
+                            <th>November</th>
+                            <th>Desember</th>
+                            <th>Grand Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach ($stoAnalysis as $analysis)
+                            <tr>
+                                <td>{{ $analysis->STO }}</td>
+                                <td>{{ $analysis->total_januari }}</td>
+                                <td>{{ $analysis->total_februari }}</td>
+                                <td>{{ $analysis->total_maret }}</td>
+                                <td>{{ $analysis->total_april }}</td>
+                                <td>{{ $analysis->total_mei }}</td>
+                                <td>{{ $analysis->total_juni }}</td>
+                                <td>{{ $analysis->total_juli }}</td>
+                                <td>{{ $analysis->total_agustus }}</td>
+                                <td>{{ $analysis->total_september }}</td>
+                                <td>{{ $analysis->total_oktober }}</td>
+                                <td>{{ $analysis->total_november }}</td>
+                                <td>{{ $analysis->total_desember }}</td>
+                                <td>{{ $analysis->grand_total }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        @elseif ($viewType == 'chart')
+            <canvas id="stoChart"></canvas>
+            <script>
+                var ctx = document.getElementById('stoChart').getContext('2d');
+                var chart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September',
+                            'Oktober', 'November', 'Desember'
+                        ],
+                        datasets: [{
+                            label: '{{ $selectedSto }}',
+                            data: [
+                                @foreach ($stoAnalysis as $analysis)
+                                    {{ $analysis->total_januari }},
+                                    {{ $analysis->total_februari }},
+                                    {{ $analysis->total_maret }},
+                                    {{ $analysis->total_april }},
+                                    {{ $analysis->total_mei }},
+                                    {{ $analysis->total_juni }},
+                                    {{ $analysis->total_juli }},
+                                    {{ $analysis->total_agustus }},
+                                    {{ $analysis->total_september }},
+                                    {{ $analysis->total_oktober }},
+                                    {{ $analysis->total_november }},
+                                    {{ $analysis->total_desember }}
+                                @endforeach
+                            ],
+                            backgroundColor: 'rgba(54, 162, 235, 0.6)'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            </script>
+        @endif
     </div>
 </body>
 

@@ -214,21 +214,9 @@
             </div>
         </div>
 
-        <!-- New Dropdown for Sales Chart and Target Tracking -->
-        <div class="dropdown">
-            <a href="#" class="dropdown-toggle sidebar-item" data-toggle="dropdown" aria-haspopup="true"
-                aria-expanded="false">
-                Trend Sales
-            </a>
-            <div class="dropdown-menu">
-                <a href="{{ route('data-ps.target-tracking') }}"
-                    class="dropdown-item @if (request()->routeIs('data-ps.target-tracking')) active @endif">Target Tracking</a>
-                <a href="{{ route('data-ps.sales-chart') }}"
-                    class="dropdown-item @if (request()->routeIs('data-ps.sales-chart')) active @endif">Tracking Chart</a>
-            </div>
-        </div>
+        <a href="{{ route('data-ps.target-tracking-and-sales-chart') }}"
+            class="sidebar-item @if (request()->routeIs('data-ps.target-tracking-and-sales-chart')) active @endif">Trend Sales</a>
     </div>
-
 
     <div class="main-content">
         <div class="container">

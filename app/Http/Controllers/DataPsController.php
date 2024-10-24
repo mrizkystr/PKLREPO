@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 
 
 use Carbon\Carbon;
+use App\Models\TargetGrowth;
 use Illuminate\Http\Request;
 use App\Imports\DataPsImport;
 use Illuminate\Support\Facades\DB;
@@ -462,10 +463,51 @@ class DataPsController extends Controller
             ];
         }
 
-        // Prepare labels for charts
+        // Labels for charting
         $labels = range(1, 31);
 
-        // Return view with all necessary data
+        // Mengubah selectedMonth menjadi nama bulan yang sesuai format di tabel
+        $selectedMonthName = \Carbon\Carbon::createFromDate(null, $selectedMonth)->format('F');
+
+        // Mengambil data target growth dan RKAP dari tabel targets menggunakan model TargetGrowth
+        $targetData = TargetGrowth::where('month', $selectedMonthName)
+            ->where('year', $selectedYear)
+            ->first();
+
+        $targetGrowthValue = $targetData ? $targetData->target_growth : 0;
+        $targetRkapValue = $targetData ? $targetData->target_rkap : 0;
+
+        // Fetch data for current month and calculate MTD Realization and Daily Average
+        $currentMonthData = DataPsAgustusKujangSql::whereMonth('TGL_PS', $selectedMonth)
+            ->whereYear('TGL_PS', $selectedYear)
+            ->get();
+
+        $mtdRealization = $currentMonthData->count();
+        $dailyTargetAverage = $currentMonthData->groupBy(function ($date) {
+            return \Carbon\Carbon::parse($date->TGL_PS)->format('Y-m-d');
+        })->avg(function ($day) {
+            return count($day);
+        });
+
+        // Calculate Growth Achievement
+        $growthAchievement = $targetGrowthValue ? ($mtdRealization / $targetGrowthValue) * 100 : 0;
+
+        // Calculate RKAP Achievement
+        $rkapAchievement = $targetRkapValue ? ($mtdRealization / $targetRkapValue) * 100 : 0;
+
+        // Fetch data for previous month and calculate MTD Realization and Daily Average for previous month
+        $previousMonthData = DataPsAgustusKujangSql::whereMonth('TGL_PS', $previousMonth)
+            ->whereYear('TGL_PS', $previousMonthYear)
+            ->get();
+
+        $mtdRealizationPreviousMonth = $previousMonthData->count();
+        $dailyTargetAveragePreviousMonth = $previousMonthData->groupBy(function ($date) {
+            return \Carbon\Carbon::parse($date->TGL_PS)->format('Y-m-d');
+        })->avg(function ($day) {
+            return count($day);
+        });
+
+        // Pass all data to the view
         return view('data-ps.target-tracking-and-sales-chart', [
             'dataToDisplayCurrentMonth' => $dataToDisplayCurrentMonth,
             'dataToDisplayPreviousMonth' => $dataToDisplayPreviousMonth,
@@ -474,6 +516,13 @@ class DataPsController extends Controller
             'selectedMonth' => $selectedMonth,
             'previousMonth' => $previousMonth,
             'viewType' => $viewType,
+            'targetGrowthValue' => $targetGrowthValue,
+            'dailyTargetAverage' => $dailyTargetAverage,
+            'mtdRealization' => $mtdRealization,
+            'growthAchievement' => $growthAchievement,
+            'rkapAchievement' => $rkapAchievement,
+            'dailyTargetAveragePreviousMonth' => $dailyTargetAveragePreviousMonth, // Daily average for previous month
+            'mtdRealizationPreviousMonth' => $mtdRealizationPreviousMonth,         // MTD realization for previous month
         ]);
     }
 
@@ -488,6 +537,84 @@ class DataPsController extends Controller
         };
 
         return $ps_harian >= $threshold ? 'achieve' : 'not achieve';
+    }
+
+    // Method to store or update the target growth
+    public function saveTargetGrowth(Request $request)
+    {
+        Log::info('Request Data: ', $request->all()); // Log all incoming data
+
+        // Validate input
+        $request->validate([
+            'month' => 'required|string',
+            'year' => 'required|integer',
+            'target_growth' => 'required|numeric',
+            'target_rkap' => 'required|numeric',
+        ]);
+
+        // Save data to the database
+        TargetGrowth::updateOrCreate(
+            [
+                'month' => $request->input('month'),
+                'year' => $request->input('year')
+            ],
+            [
+                'target_growth' => $request->input('target_growth'),
+                'target_rkap' => $request->input('target_rkap')
+            ]
+        );
+
+        return redirect()->back()->with('success', 'Target Growth berhasil disimpan');
+    }
+
+    // Logic to calculate the average daily target for the current month
+    private function calculateDailyTarget()
+    {
+        // Get the current month and year
+        $currentMonth = Carbon::now()->month;
+        $currentYear = Carbon::now()->year;
+
+        // Fetch all days that have data for the current month
+        $totalDailyTargetData = DB::table('data_ps_agustus_kujang_sql')
+            ->select(DB::raw('DATE(TGL_PS) as day'), DB::raw('COUNT(*) as ps_harian'))
+            ->whereMonth('TGL_PS', $currentMonth)
+            ->whereYear('TGL_PS', $currentYear)
+            ->groupBy(DB::raw('DATE(TGL_PS)'))  // Group by day
+            ->get();
+
+        // Calculate the sum of ps_harian for each day
+        $totalTarget = $totalDailyTargetData->sum('ps_harian');
+
+        // Get the count of unique days that have data
+        $daysWithData = $totalDailyTargetData->count();
+
+        // Calculate the average target per day
+        return $daysWithData > 0 ? $totalTarget / $daysWithData : 0; // Avoid division by zero
+    }
+
+
+    // Logic to calculate the MTD realization for the current month
+    private function calculateMtdRealization()
+    {
+        // Fetch the total realization for the current month based on TGL_PS
+        $totalRealization = DB::table('data_ps_agustus_kujang_sql')
+            ->whereMonth('TGL_PS', Carbon::now()->month)  // Filter for the current month
+            ->whereYear('TGL_PS', Carbon::now()->year)    // Filter for the current year
+            ->sum('TGL_PS'); // Ensure this is the correct column to sum
+
+        return $totalRealization;
+    }
+
+    // Logic to calculate the Growth Achievement
+    private function calculateGrowthAchievement($targetGrowthValue, $mtdRealization)
+    {
+        return $targetGrowthValue > 0 ? ($mtdRealization / $targetGrowthValue) * 100 : 0;
+    }
+
+    // Logic to calculate the RKAP achievement
+    private function calculateRkapAchievement($targetRkapValue, $mtdRealization)
+    {
+        return $targetRkapValue > 0 ? ($mtdRealization / $targetRkapValue) * 100 : 0;
     }
 
     public function create()

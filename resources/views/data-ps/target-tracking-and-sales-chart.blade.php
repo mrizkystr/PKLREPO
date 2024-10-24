@@ -238,92 +238,205 @@
     </div>
 
     <div class="container">
-        <form method="GET" action="{{ route('data-ps.target-tracking-and-sales-chart') }}">
-            <label for="bulan">Select Month:</label>
-            <select name="bulan" id="bulan" onchange="this.form.submit()">
-                @foreach (range(1, 12) as $month)
-                    <option value="{{ $month }}" {{ $month == $selectedMonth ? 'selected' : '' }}>
-                        {{ date('F', mktime(0, 0, 0, $month, 1)) }}
-                    </option>
-                @endforeach
-            </select>
 
-            <label for="view_type">View Type:</label>
-            <select name="view_type" id="view_type" onchange="this.form.submit()">
-                <option value="table" {{ $viewType == 'table' ? 'selected' : '' }}>Table</option>
-                <option value="chart" {{ $viewType == 'chart' ? 'selected' : '' }}>Chart</option>
-            </select>
-        </form>
+        <!-- Main Content -->
+        <div class="main-content">
+            @if (session('success'))
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    {{ session('success') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            @endif
 
-        @if ($selectedMonth)
-            @if ($viewType == 'table')
-                <div class="row">
-                    <!-- Left Table (Current Month) -->
-                    <div class="col-lg-6">
-                        <div class="table-container">
-                            <h3>Current Month ({{ date('F', mktime(0, 0, 0, $selectedMonth, 1)) }})</h3>
-                            <table class="table">
-                                <thead>
-                                    <tr>
-                                        <th>Tanggal</th>
-                                        <th>PS Harian</th>
-                                        <th>Realisasi MTD</th>
-                                        <th>Gimik</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @php
-                                        $cumulativeMTD = 0; // Untuk menyimpan total MTD untuk bulan berjalan
-                                    @endphp
-                                    @foreach ($dataToDisplayCurrentMonth as $currentData)
-                                        @php
-                                            $cumulativeMTD += $currentData['ps_harian']; // Menambahkan ps_harian ke cumulative
-                                        @endphp
-                                        <tr>
-                                            <td>{{ $currentData['tgl'] }}</td>
-                                            <td>{{ $currentData['ps_harian'] }}</td>
-                                            <td>{{ $cumulativeMTD }}</td>
-                                            <td>{{ $currentData['gimmick'] }}</td>
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
+            <!-- Target Growth Form Section -->
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Set Target Growth</h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ route('data-ps.save-target-growth') }}" class="row g-3">
+                        @csrf
+                        <div class="col-md-3">
+                            <label for="month" class="form-label">Month</label>
+                            <select name="month" id="month" class="form-control" required>
+                                @foreach (['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'] as $month)
+                                    <option value="{{ $month }}"
+                                        {{ isset($currentMonth) && $currentMonth == $month ? 'selected' : '' }}>
+                                        {{ $month }}
+                                    </option>
+                                @endforeach
+                            </select>
                         </div>
-                    </div>
+                        <div class="col-md-3">
+                            <label for="year" class="form-label">Year</label>
+                            <input type="number" name="year" id="year" class="form-control"
+                                value="{{ date('Y') }}" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="target_growth" class="form-label">Target Growth</label>
+                            <input type="number" name="target_growth" id="target_growth" class="form-control"
+                                step="0.01" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="target_rkap" class="form-label">Target RKAP</label>
+                            <input type="number" name="target_rkap" id="target_rkap" class="form-control"
+                                step="0.01" required>
+                        </div>
+                        <div class="col-12 mt-3">
+                            <button type="submit" class="btn btn-primary">Save Target Growth</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
 
-                    <!-- Right Table (Previous Month) -->
-                    <div class="col-lg-6">
-                        <div class="table-container">
-                            <h3>Previous Month ({{ date('F', mktime(0, 0, 0, $previousMonth, 1)) }})</h3>
-                            <table class="table">
-                                <thead>
-                                    <tr>
-                                        <th>Tanggal</th>
-                                        <th>Realisasi Bulan Lalu</th>
-                                        <th>Realisasi MTD Bulan Lalu</th>
-                                        <th>GAP MTD</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @php
-                                        $cumulativeMTDPrev = 0; // Total MTD bulan sebelumnya
-                                        $cumulativeMTDCurrent = 0; // Total MTD bulan sekarang
-                                    @endphp
-                                    @foreach ($dataToDisplayPreviousMonth as $index => $prevData)
-                                        @php
-                                            // Hitung cumulative untuk bulan sekarang
-                                            $cumulativeMTDCurrent += $dataToDisplayCurrentMonth[$index]['ps_harian'];
-                                            // Hitung cumulative untuk bulan sebelumnya
-                                            $cumulativeMTDPrev += $prevData['realisasi_bulan_lalu'];
-                                            // Hitung GAP MTD
-                                            $gapMTD = $cumulativeMTDCurrent - $cumulativeMTDPrev;
-                                        @endphp
+            <form method="GET" action="{{ route('data-ps.target-tracking-and-sales-chart') }}">
+                <label for="bulan">Select Month:</label>
+                <select name="bulan" id="bulan" onchange="this.form.submit()">
+                    @foreach (range(1, 12) as $month)
+                        <option value="{{ $month }}" {{ $month == $selectedMonth ? 'selected' : '' }}>
+                            {{ date('F', mktime(0, 0, 0, $month, 1)) }}
+                        </option>
+                    @endforeach
+                </select>
+
+                <label for="view_type">View Type:</label>
+                <select name="view_type" id="view_type" onchange="this.form.submit()">
+                    <option value="table" {{ $viewType == 'table' ? 'selected' : '' }}>Table</option>
+                    <option value="chart" {{ $viewType == 'chart' ? 'selected' : '' }}>Chart</option>
+                </select>
+            </form>
+
+
+            <!-- Target Summary Card -->
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Target Summary - {{ isset($currentMonth) ? $currentMonth : '' }}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered mb-0">
+                            <tbody>
+                                <tr>
+                                    <td class="bg-light">Target Growth</td>
+                                    <td class="text-end bg-light-success">{{ $targetGrowthValue }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="bg-light">Rata-rata Harian</td>
+                                    <td class="text-end bg-light-success">{{ number_format($dailyTargetAverage, 2) }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="bg-light">Realisasi MTD</td>
+                                    <td class="text-end bg-light-success">{{ $mtdRealization }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="bg-light">Achievement Target Growth</td>
+                                    <td class="text-end bg-light-success">{{ number_format($growthAchievement, 2) }}%
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="bg-light">Achievement Target RKAP</td>
+                                    <td class="text-end bg-light-success">{{ number_format($rkapAchievement, 2) }}%
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Target Summary Card for Previous Month -->
+            <div class="card mb-4">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0">Target Summary - {{ isset($previousMonth) ? $previousMonth : '' }}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered mb-0">
+                            <tbody>
+                                <tr>
+                                    <td class="bg-light">Rata-rata Harian Bulan Lalu</td>
+                                    <td class="text-end bg-light-info">{{ number_format($dailyTargetAveragePreviousMonth,2 ) }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="bg-light">Realisasi MTD Bulan Lalu</td>
+                                    <td class="text-end bg-light-info">{{ $mtdRealizationPreviousMonth }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            @if ($selectedMonth)
+                @if ($viewType == 'table')
+                    <div class="row">
+                        <!-- Left Table (Current Month) -->
+                        <div class="col-lg-6">
+                            <div class="table-container">
+                                <h3>Current Month ({{ date('F', mktime(0, 0, 0, $selectedMonth, 1)) }})</h3>
+                                <table class="table">
+                                    <thead>
                                         <tr>
-                                            <td>{{ $prevData['tgl'] }}</td>
-                                            <td>{{ $prevData['realisasi_bulan_lalu'] }}</td>
-                                            <td>{{ $cumulativeMTDPrev }}</td>
-                                            <td
-                                                style="
+                                            <th>Tanggal</th>
+                                            <th>PS Harian</th>
+                                            <th>Realisasi MTD</th>
+                                            <th>Gimik</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @php
+                                            $cumulativeMTD = 0; // Untuk menyimpan total MTD untuk bulan berjalan
+                                        @endphp
+                                        @foreach ($dataToDisplayCurrentMonth as $currentData)
+                                            @php
+                                                $cumulativeMTD += $currentData['ps_harian']; // Menambahkan ps_harian ke cumulative
+                                            @endphp
+                                            <tr>
+                                                <td>{{ $currentData['tgl'] }}</td>
+                                                <td>{{ $currentData['ps_harian'] }}</td>
+                                                <td>{{ $cumulativeMTD }}</td>
+                                                <td>{{ $currentData['gimmick'] }}</td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Right Table (Previous Month) -->
+                        <div class="col-lg-6">
+                            <div class="table-container">
+                                <h3>Previous Month ({{ date('F', mktime(0, 0, 0, $previousMonth, 1)) }})</h3>
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Tanggal</th>
+                                            <th>Realisasi Bulan Lalu</th>
+                                            <th>Realisasi MTD Bulan Lalu</th>
+                                            <th>GAP MTD</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @php
+                                            $cumulativeMTDPrev = 0; // Total MTD bulan sebelumnya
+                                            $cumulativeMTDCurrent = 0; // Total MTD bulan sekarang
+                                        @endphp
+                                        @foreach ($dataToDisplayPreviousMonth as $index => $prevData)
+                                            @php
+                                                // Hitung cumulative untuk bulan sekarang
+                                                $cumulativeMTDCurrent +=
+                                                    $dataToDisplayCurrentMonth[$index]['ps_harian'];
+                                                // Hitung cumulative untuk bulan sebelumnya
+                                                $cumulativeMTDPrev += $prevData['realisasi_bulan_lalu'];
+                                                // Hitung GAP MTD
+                                                $gapMTD = $cumulativeMTDCurrent - $cumulativeMTDPrev;
+                                            @endphp
+                                            <tr>
+                                                <td>{{ $prevData['tgl'] }}</td>
+                                                <td>{{ $prevData['realisasi_bulan_lalu'] }}</td>
+                                                <td>{{ $cumulativeMTDPrev }}</td>
+                                                <td
+                                                    style="
                             @if ($gapMTD > 0) background-color: #4CAF50; 
                                 color: white;
                             @elseif($gapMTD < 0)
@@ -333,61 +446,61 @@
                                 background-color: #DCDCDC;
                                 color: black; @endif
                         ">
-                                                {{ number_format($gapMTD, 0) }}
-                                            </td>
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
+                                                    {{ number_format($gapMTD, 0) }}
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
-                    </div>
-                @elseif ($viewType == 'chart')
-                    <canvas id="salesChart"></canvas>
-                    <script>
-                        const ctx = document.getElementById('salesChart').getContext('2d');
-                        const salesChart = new Chart(ctx, {
-                            type: 'line',
-                            data: {
-                                labels: {!! json_encode($labels) !!},
-                                datasets: [{
-                                    label: 'Current Month (Realisasi MTD)',
-                                    data: {!! json_encode(array_column($dataToDisplayCurrentMonth, 'realisasi_mtd')) !!},
-                                    borderColor: 'rgba(54, 162, 235, 1)',
-                                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                                    fill: true,
-                                    tension: 0.4
-                                }, {
-                                    label: 'Previous Month (Realisasi MTD)',
-                                    data: {!! json_encode(array_column($dataToDisplayPreviousMonth, 'realisasi_mtd_bulan_lalu')) !!},
-                                    borderColor: 'rgba(255, 99, 132, 1)',
-                                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
-                                    fill: true,
-                                    tension: 0.4
-                                }]
-                            },
-                            options: {
-                                responsive: true,
-                                scales: {
-                                    y: {
-                                        beginAtZero: true,
-                                        title: {
-                                            display: true,
-                                            text: 'Sales'
-                                        }
-                                    },
-                                    x: {
-                                        title: {
-                                            display: true,
-                                            text: 'Days'
+                    @elseif ($viewType == 'chart')
+                        <canvas id="salesChart"></canvas>
+                        <script>
+                            const ctx = document.getElementById('salesChart').getContext('2d');
+                            const salesChart = new Chart(ctx, {
+                                type: 'line',
+                                data: {
+                                    labels: {!! json_encode($labels) !!},
+                                    datasets: [{
+                                        label: 'Current Month (Realisasi MTD)',
+                                        data: {!! json_encode(array_column($dataToDisplayCurrentMonth, 'realisasi_mtd')) !!},
+                                        borderColor: 'rgba(54, 162, 235, 1)',
+                                        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                                        fill: true,
+                                        tension: 0.4
+                                    }, {
+                                        label: 'Previous Month (Realisasi MTD)',
+                                        data: {!! json_encode(array_column($dataToDisplayPreviousMonth, 'realisasi_mtd_bulan_lalu')) !!},
+                                        borderColor: 'rgba(255, 99, 132, 1)',
+                                        backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                                        fill: true,
+                                        tension: 0.4
+                                    }]
+                                },
+                                options: {
+                                    responsive: true,
+                                    scales: {
+                                        y: {
+                                            beginAtZero: true,
+                                            title: {
+                                                display: true,
+                                                text: 'Sales'
+                                            }
+                                        },
+                                        x: {
+                                            title: {
+                                                display: true,
+                                                text: 'Days'
+                                            }
                                         }
                                     }
                                 }
-                            }
-                        });
-                    </script>
+                            });
+                        </script>
+                @endif
             @endif
-        @endif
-    </div>
+        </div>
 </body>
 
 </html>

@@ -4,9 +4,11 @@ use App\Http\Controllers;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DataController;
 use App\Http\Controllers\DataPsController;
+use App\Http\Controllers\TargetController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\SalesCodesController;
 use App\Http\Controllers\DataPsImportController;
+use App\Http\Controllers\TargetGrowthController;
 
 
 /*
@@ -78,11 +80,22 @@ Route::prefix('data-ps')->group(function () {
     // Route::get('/data-ps/target-tracking', [DataPsController::class, 'targetTracking'])->name('data-ps.target-tracking');
     // Route::get('/data-ps/sales-chart', [DataPsController::class, 'salesChart'])->name('data-ps.sales-chart');
 
-    Route::get('data-ps/target-tracking-and-sales-chart', [DataPsController::class, 'targetTrackingAndSalesChart'])->name('data-ps.target-tracking-and-sales-chart');
-
     // Route untuk import Excel
     Route::post('/import-excel', [DataPsController::class, 'importExcel'])->name('data-ps.import');
+
+
+    Route::get('data-ps/target-tracking-and-sales-chart', [DataPsController::class, 'targetTrackingAndSalesChart'])->name('data-ps.target-tracking-and-sales-chart');
+    Route::get('data-ps/growth-data', [DataPsController::class, 'showGrowthData'])->name('data-ps.growth-data');
+
+    // Route untuk menyimpan atau memperbarui Target Growth
+    Route::post('data-ps/save-target-growth', [DataPsController::class, 'saveTargetGrowth'])->name('data-ps.save-target-growth');
 });
+
+Route::prefix('target-growth')->group(function () {
+    Route::get('/', [TargetGrowthController::class, 'index'])->name('target-growth.index');
+    Route::post('/set-target', [TargetGrowthController::class, 'setTarget'])->name('target-growth.setTarget');
+});
+
 
 
 // SalesCode routes

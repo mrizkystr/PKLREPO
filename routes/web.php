@@ -7,6 +7,7 @@ use App\Http\Controllers\DataPsController;
 use App\Http\Controllers\TargetController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\SalesCodesController;
+use App\Http\Controllers\LandingPageController;
 use App\Http\Controllers\DataPsImportController;
 use App\Http\Controllers\TargetGrowthController;
 use App\Http\Controllers\Api\Admin\UserController;
@@ -23,9 +24,9 @@ use App\Http\Controllers\Api\Admin\UserController;
 |
 */
 
-Route::get('/', function () {
-    return view('welcome');
-});
+// Route::get('/', function () {
+//     return view('welcome');
+// });
 
 // Route::get('/dashboard', function () {
 //     return view('layouts/app');
@@ -53,7 +54,7 @@ Route::get('/details', function () {
 
 // Route::post('/import-excel', [DataPsController::class, 'importExcel']);
 
-
+Route::get('/', [LandingPageController::class, 'index'])->name('landing-page');
 Route::get('/dashboard', [DashboardController::class, 'dashboard'])->name('dashboard');
 
 

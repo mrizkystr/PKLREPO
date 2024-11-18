@@ -6,19 +6,18 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DataPsController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\SalesCodesController;
-use App\Http\Controllers\TargetGrowthController;
+use App\Http\Controllers\Api\Auth\AuthController;
+use App\Http\Controllers\Api\Admin\UserController;
+
+Route::prefix('admin')->name('admin.')->group(function () {
+    Route::post('/users', [UserController::class, 'store'])->name('users.store'); // Register manual
+    Route::post('/users/import', [UserController::class, 'import'])->name('users.import'); // Import Excel
+});
 
 
-
-
-
-
-
-
-
-
-
-
+Route::post('/login', [AuthController::class, 'login']);
+Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:api');
+Route::get('/profile', [AuthController::class, 'profile'])->middleware('auth:api');
 Route::get('/dashboard', [DashboardController::class, 'dashboard'])->name('dashboard');
 
 // DataPs routes
@@ -63,9 +62,4 @@ Route::prefix('sales-codes')->group(function () {
     Route::get('/{id}/edit', [SalesCodesController::class, 'edit'])->name('sales-codes.edit');
     Route::put('/{id}', [SalesCodesController::class, 'update'])->name('sales-codes.update');
     Route::delete('/{id}', [SalesCodesController::class, 'destroy'])->name('sales-codes.destroy');
-});
-
-Route::prefix('target-growth')->group(function () {
-    Route::post('/store-or-update', [TargetGrowthController::class, 'storeOrUpdate'])->name('target-growth.storeOrUpdate');
-    Route::get('/show/{year}/{month}', [TargetGrowthController::class, 'show'])->name('target-growth.show');
 });

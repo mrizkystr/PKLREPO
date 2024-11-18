@@ -9,6 +9,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\SalesCodesController;
 use App\Http\Controllers\DataPsImportController;
 use App\Http\Controllers\TargetGrowthController;
+use App\Http\Controllers\Api\Admin\UserController;
 
 
 /*
@@ -55,6 +56,13 @@ Route::get('/details', function () {
 
 Route::get('/dashboard', [DashboardController::class, 'dashboard'])->name('dashboard');
 
+
+Route::prefix('admin')->middleware(['auth'])->name('admin.')->group(function () {
+    Route::get('/users', [UserController::class, 'index'])->name('users.index');
+    Route::post('/users', [UserController::class, 'store'])->name('users.store');
+    Route::post('/users/import', [UserController::class, 'import'])->name('users.import');
+});
+
 // DataPs routes
 Route::prefix('data-ps')->group(function () {
     Route::get('/data', [DataPsController::class, 'index'])->name('data-ps.index');
@@ -89,11 +97,6 @@ Route::prefix('data-ps')->group(function () {
 
     // Route untuk menyimpan atau memperbarui Target Growth
     Route::post('data-ps/save-target-growth', [DataPsController::class, 'saveTargetGrowth'])->name('data-ps.save-target-growth');
-});
-
-Route::prefix('target-growth')->group(function () {
-    Route::get('/', [TargetGrowthController::class, 'index'])->name('target-growth.index');
-    Route::post('/set-target', [TargetGrowthController::class, 'setTarget'])->name('target-growth.setTarget');
 });
 
 

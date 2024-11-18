@@ -376,7 +376,9 @@ class DataPsController extends Controller
     {
         // Get selected month or use the current month as default
         $selectedMonth = $request->input('bulan', now()->month);
-        $selectedYear = now()->year;
+
+        // Get selected year or use the current year as default
+        $selectedYear = $request->input('year', now()->year);
 
         // Calculate the previous month and year
         $previousMonth = $selectedMonth == 1 ? 12 : $selectedMonth - 1;
@@ -466,10 +468,14 @@ class DataPsController extends Controller
         // Labels for charting
         $labels = range(1, 31);
 
-        // Mengubah selectedMonth menjadi nama bulan yang sesuai format di tabel
-        $selectedMonthName = \Carbon\Carbon::createFromDate(null, $selectedMonth)->format('F');
+        // Get selected month or use the current month as default
+        $selectedMonth = $request->input('bulan', now()->month);
+        $selectedYear = $request->input('year', now()->year); // Allow year selection for more flexibility
 
-        // Mengambil data target growth dan RKAP dari tabel targets menggunakan model TargetGrowth
+        // Ensure correct month formatting for TargetGrowth lookup
+        $selectedMonthName = \Carbon\Carbon::createFromDate($selectedYear, $selectedMonth, 1)->format('F');
+
+        // Retrieve target data for the selected month and year
         $targetData = TargetGrowth::where('month', $selectedMonthName)
             ->where('year', $selectedYear)
             ->first();
@@ -477,7 +483,7 @@ class DataPsController extends Controller
         $targetGrowthValue = $targetData ? $targetData->target_growth : 0;
         $targetRkapValue = $targetData ? $targetData->target_rkap : 0;
 
-        // Fetch data for current month and calculate MTD Realization and Daily Average
+        // Fetch and calculate MTD Realization and Daily Average for current month
         $currentMonthData = DataPsAgustusKujangSql::whereMonth('TGL_PS', $selectedMonth)
             ->whereYear('TGL_PS', $selectedYear)
             ->get();
@@ -489,10 +495,8 @@ class DataPsController extends Controller
             return count($day);
         });
 
-        // Calculate Growth Achievement
+        // Calculate Achievement for Growth and RKAP
         $growthAchievement = $targetGrowthValue ? ($mtdRealization / $targetGrowthValue) * 100 : 0;
-
-        // Calculate RKAP Achievement
         $rkapAchievement = $targetRkapValue ? ($mtdRealization / $targetRkapValue) * 100 : 0;
 
         // Fetch data for previous month and calculate MTD Realization and Daily Average for previous month
@@ -509,6 +513,8 @@ class DataPsController extends Controller
 
         // Pass all data to the view
         return view('data-ps.target-tracking-and-sales-chart', [
+            'selectedMonth' => $selectedMonth,
+            'selectedYear' => $selectedYear,
             'dataToDisplayCurrentMonth' => $dataToDisplayCurrentMonth,
             'dataToDisplayPreviousMonth' => $dataToDisplayPreviousMonth,
             'gapMTDData' => $gapMTDData,
@@ -548,9 +554,23 @@ class DataPsController extends Controller
         $request->validate([
             'month' => 'required|string',
             'year' => 'required|integer',
-            'target_growth' => 'required|numeric',
-            'target_rkap' => 'required|numeric',
+            'target_growth' => 'nullable|numeric',
+            'target_rkap' => 'nullable|numeric',
         ]);
+
+        // Prepare only the fields that are present in the request
+        $data = [];
+        if ($request->filled('target_growth')) {
+            $data['target_growth'] = $request->input('target_growth');
+        }
+        if ($request->filled('target_rkap')) {
+            $data['target_rkap'] = $request->input('target_rkap');
+        }
+
+        // Ensure that we have at least one field to update
+        if (empty($data)) {
+            return redirect()->back()->withErrors(['error' => 'Please provide at least one field to update.']);
+        }
 
         // Save data to the database
         TargetGrowth::updateOrCreate(
@@ -558,14 +578,12 @@ class DataPsController extends Controller
                 'month' => $request->input('month'),
                 'year' => $request->input('year')
             ],
-            [
-                'target_growth' => $request->input('target_growth'),
-                'target_rkap' => $request->input('target_rkap')
-            ]
+            $data
         );
 
         return redirect()->back()->with('success', 'Target Growth berhasil disimpan');
     }
+
 
     // Logic to calculate the average daily target for the current month
     private function calculateDailyTarget()

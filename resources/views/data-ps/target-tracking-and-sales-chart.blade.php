@@ -275,12 +275,12 @@
                         <div class="col-md-3">
                             <label for="target_growth" class="form-label">Target Growth</label>
                             <input type="number" name="target_growth" id="target_growth" class="form-control"
-                                step="0.01" required>
+                                step="0.01" placeholder="Optional">
                         </div>
                         <div class="col-md-3">
                             <label for="target_rkap" class="form-label">Target RKAP</label>
                             <input type="number" name="target_rkap" id="target_rkap" class="form-control"
-                                step="0.01" required>
+                                step="0.01" placeholder="Optional">
                         </div>
                         <div class="col-12 mt-3">
                             <button type="submit" class="btn btn-primary">Save Target Growth</button>
@@ -299,6 +299,15 @@
                     @endforeach
                 </select>
 
+                <label for="tahun">Select Year:</label>
+                <select name="year" id="year" onchange="this.form.submit()">
+                    @foreach (range(2020, date('Y')+ 5) as $year)
+                        <option value="{{ $year }}" {{ $year == $selectedYear ? 'selected' : '' }}>
+                            {{ $year }}
+                        </option>
+                    @endforeach
+                </select>
+
                 <label for="view_type">View Type:</label>
                 <select name="view_type" id="view_type" onchange="this.form.submit()">
                     <option value="table" {{ $viewType == 'table' ? 'selected' : '' }}>Table</option>
@@ -310,7 +319,7 @@
             <!-- Target Summary Card -->
             <div class="card mb-4">
                 <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0">Target Summary - {{ isset($currentMonth) ? $currentMonth : '' }}</h5>
+                    <h5 class="mb-0">Target Summary for {{ date('F', mktime(0, 0, 0, $selectedMonth, 1)) }}</h5>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
@@ -322,7 +331,8 @@
                                 </tr>
                                 <tr>
                                     <td class="bg-light">Rata-rata Harian</td>
-                                    <td class="text-end bg-light-success">{{ number_format($dailyTargetAverage, 2) }}</td>
+                                    <td class="text-end bg-light-success">{{ number_format($dailyTargetAverage, 2) }}
+                                    </td>
                                 </tr>
                                 <tr>
                                     <td class="bg-light">Realisasi MTD</td>
@@ -344,6 +354,7 @@
                 </div>
             </div>
 
+
             <!-- Target Summary Card for Previous Month -->
             <div class="card mb-4">
                 <div class="card-header bg-secondary text-white">
@@ -355,7 +366,8 @@
                             <tbody>
                                 <tr>
                                     <td class="bg-light">Rata-rata Harian Bulan Lalu</td>
-                                    <td class="text-end bg-light-info">{{ number_format($dailyTargetAveragePreviousMonth,2 ) }}</td>
+                                    <td class="text-end bg-light-info">
+                                        {{ number_format($dailyTargetAveragePreviousMonth, 2) }}</td>
                                 </tr>
                                 <tr>
                                     <td class="bg-light">Realisasi MTD Bulan Lalu</td>

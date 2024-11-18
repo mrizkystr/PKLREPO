@@ -7,6 +7,42 @@
     <title>Data PS Management</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="{{ asset('resources/css/styles.css') }}">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+        }
+
+        .container {
+            margin-top: 50px;
+        }
+
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .card-body {
+            padding: 20px;
+        }
+
+        .card-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .card-text {
+            color: #666;
+        }
+
+        .social-icons img {
+            width: 30px;
+            height: 30px;
+        }
+    </style>
 </head>
 <body>
 
@@ -14,10 +50,9 @@
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
         <div class="container-fluid">
             <a class="navbar-brand d-flex align-items-center" href="#">
-                <img src="{{ asset('images/logo.png') }}" alt="Logo" width="40" height="40" class="me-2">
-                <span class="brand-text">Telkom Indonesia</span>
+                <img src="{{ asset('images/telkom.jpg') }}" alt="Logo" width="100" height="50" class="me-2">
             </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria -expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
@@ -58,7 +93,7 @@
     <!-- Main Content -->
     <div class="container text-center mt-5">
         <h1 class="display-4">DATA PS MANAGEMENT</h1>
-        <img src="{{ asset('images/space-image.jpg') }}" alt="Space Image" class="img-fluid rounded-circle mb-4" style="max-width: 60%;">
+        <img src="{{ asset('images/satelit.jpg') }}" alt="Satellite Image" class="img-fluid mb-4" style="max-width: 60%;">
 
         <div class="row mt-5">
             <div class="col">
@@ -105,6 +140,7 @@
             <img src="{{ asset('images/facebook.png') }}" alt="Facebook" class="mx-2">
             <img src="{{ asset('images/phone.png') }}" alt="Phone" class="mx-2">
         </div>
+        <img src="{{ asset('images/tiang.jpg') }}" alt="Tiang" class="img -fluid mt-4" style="max-width: 30%; position: absolute; bottom: 20px; right: 20px;">
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

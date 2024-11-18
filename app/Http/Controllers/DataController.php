@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use DB;
+use Illuminate\Support\Facades\DB;
+use App\Http\Controllers\Controller;
+
 
 class DataController extends Controller
 {
